@@ -291,3 +291,12 @@ Every team member should be able to explain why UDP needs application-level sequ
 - **Fix:** after confirming its command line, sent SIGTERM to PID 6679. `ss` showed port 6633 free afterward.
 - **Result:** `qos_controller` started without the address-in-use error. It has not yet logged a switch connection; this is expected until Mininet starts/connects.
 - **Next:** leave this controller terminal running, create a fresh Mininet topology in another terminal, confirm POX logs switch 1 connected, then run the comparable adaptive trial.
+
+
+### 2026-10-10 — Third QoS candidate traffic run collected; controller log needed
+
+- **Topology:** fresh Mininet topology started and pingall passed (0% dropped, 6/6).
+- **Traffic output:** high 10,987 packets, 0% loss, 1.5001 Mbps, 144.5412 ms mean, 422.8083 ms p95; bulk 5,028 packets, 0% loss, 1.6090 Mbps, 578.8457 ms mean, 2,452.5831 ms p95.
+- **File naming:** the VM wrote this run under `/tmp/baseline3.csv` and baseline3 log names, but the expected controller setup was the QoS controller. The separate GitHub `results/baseline3.csv` remains the confirmed standard-controller result. This new receiver CSV was preserved as `results/adaptive3.csv` provisionally.
+- **Verification needed:** get the POX log covering this run to confirm the switch connected and whether the QoS policy became ACTIVE. Until then, classify run 3 as a QoS candidate, not a confirmed adaptive result.
+- **Next:** share POX switch/policy messages from this run; then update the analysis classification. The current bulk count (5,028) is lower than the baseline range (5,962–6,368), so treat it as a separate offered-load level unless repeat results match more closely.
