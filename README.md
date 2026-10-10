@@ -51,7 +51,7 @@ A **POX SDN controller** watches switch-port counters. When utilization crosses 
 ## 🧠 How it works
 
 1. **Generate:** Python UDP senders create high and bulk traffic.
-2. **Measure:** The receiver records sequence numbers and send timestamps.
+2. **Measure:** The receiver records sequence numbers and send timestamps. It reports loss only when it receives the sender's end marker; otherwise loss is unknown.
 3. **Monitor:** POX polls the receiver-facing OVS port every 2 seconds.
 4. **React:** At **≥70% utilization**, the controller activates queue actions. It clears the policy below **50%**.
 5. **Compare:** CSV output reports throughput, packet loss, mean delay, and p95 delay.
@@ -147,11 +147,11 @@ Look for UDP destination port **5001** with `enqueue:"s1-eth3":1`, and port **50
 - **Baseline:** start the POX learning-switch component `forwarding.l2_learning`, not `qos_controller`; run the same topology and traffic rates.
 - **QoS:** start `qos_controller`; the flow dump should show queue 1 / queue 2 actions during the run.
 - Do not run two POX controllers on port **6633** at the same time.
-- Use fresh CSV names for each trial. Record controller logs and actual sender packet counts.
+- Use fresh CSV names for each trial. Record controller logs and actual sender packet counts. Check `end_marker_received`; when it is `false`, the receiver cannot know the missing tail, so use sender totals or repeat the run.
 - Repeat at least three comparable trials per condition when possible.
 
 > [!WARNING]
-> A recently shared run saved as `baseline3.csv` showed queue actions for UDP 5001 and 5002. That is evidence the QoS controller was active, so **do not include that run in the baseline average**. Rename or annotate it as a QoS-active trial in the analysis.
+ >
 
 </details>
 
