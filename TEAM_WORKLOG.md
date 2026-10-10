@@ -337,3 +337,13 @@ Every team member should be able to explain why UDP needs application-level sequ
 - **Reconciled loss for this run:** calculated from sender counts minus receiver unique counts: high 3,280 lost (29.856%); bulk 4,923 lost (55.848%). Saved separately in `results/baseline4_reconciled.csv`. Treat as a separate higher-load baseline stress run; do not include in the matched-load average.
 - **POX error:** the pasted controller log contains repeated `AttributeError: type object 'ipv4' has no attribute 'ipv4'` while POX parses ICMP Destination Unreachable messages. The error was in POX's ICMP parser; the UDP flows nevertheless appeared in the switch table with normal output actions. It is a known control-plane parser issue, not evidence by itself that the UDP data plane failed.
 - **Next:** pull the latest `main` into the VM; repeat a baseline and a QoS run with comparable actual sender totals; confirm `end_marker_received: true` before trusting receiver loss fields. Preserve flow dumps and full controller logs.
+
+
+### 2026-10-10 — Updated receiver validated in baseline run 5
+
+- **Repository update:** pulled latest `main`, including the receiver change that reports `end_marker_received` and avoids inferring loss from the highest received sequence.
+- **Topology:** restarted Mininet, `pingall` passed with 0% dropped (6/6).
+- **Baseline flow evidence:** the live flow dump showed UDP 5001 and UDP 5002 both using `actions=output:"s1-eth3"`; no QoS `enqueue` action appeared.
+- **Receiver results:** high marker received, expected/received 10,987/10,987, 0% loss, 1.5001 Mbps, mean 216.0576 ms, p95 309.9386 ms. Bulk marker received, expected/received 8,767/8,767, 0% loss, 2.8054 Mbps, mean 213.4770 ms, p95 299.9790 ms.
+- **Interpretation:** the receiver fix worked in this run. Total received throughput was about 4.31 Mbps on the configured 5 Mbps link. Bulk load is above the confirmed matched-load trials, so record as an additional baseline point rather than fold it into the matched-load average.
+- **Next:** collect the same run with `qos_controller`; confirm controller ACTIVE and queue 1/2 actions while traffic is flowing. Compare only after checking actual sender totals and both end-marker flags. The bulk sender log was requested in the transcript but no summary line was included; receiver's end marker recorded 8,767 expected packets.
