@@ -326,3 +326,14 @@ Every team member should be able to explain why UDP needs application-level sequ
 - **Revised baseline set:** only `results/baseline.csv` and `results/baseline2.csv` are confirmed baseline runs. Their averages are high: 1.4814 Mbps, 296.8220 ms mean, 523.5591 ms p95; bulk: 1.9446 Mbps, 296.6548 ms mean, 521.8725 ms p95.
 - **Verified switch behavior:** during the same observed traffic interval, flow counters increased to 6,712 high packets and 4,718 bulk packets, with actions `enqueue:"s1-eth3":1` and `enqueue:"s1-eth3":2` respectively.
 - **Next:** update any copies of the report/PPT using two baseline trials, then collect at least one genuine baseline run using only `forwarding.l2_learning`; verify the two UDP flows use normal output actions rather than queue enqueue actions before saving it under a baseline filename.
+
+
+### 2026-10-10 — Baseline stress run 4 verified; receiver loss fallback corrected
+
+- **Controller/flow verification:** the Mininet flow dump during run 4 showed UDP destination ports 5001 and 5002 both using `actions=output:"s1-eth3"`. No `enqueue` action appeared, confirming this was a standard POX learning-switch baseline.
+- **Sender totals:** high sent 10,986 packets; bulk sent 8,815.
+- **Receiver output:** high received 7,706 unique packets, throughput 1.0521 Mbps, mean delay 159.2145 ms, p95 314.8757 ms; bulk received 3,892, throughput 1.2454 Mbps, mean 228.3658 ms, p95 326.4109 ms. Receiver printed 0% loss, but its expected counts (7,706 / 3,892) were less than sender totals.
+- **Cause found in `src/traffic.py`:** when no QEND marker arrived, receiver inferred expected packets as max(received sequence)+1. That fallback hid tail loss and incorrectly printed zero. Updated code now includes `end_marker_received` and reports expected/lost/loss percentage as null when no sender marker is received.
+- **Reconciled loss for this run:** calculated from sender counts minus receiver unique counts: high 3,280 lost (29.856%); bulk 4,923 lost (55.848%). Saved separately in `results/baseline4_reconciled.csv`. Treat as a separate higher-load baseline stress run; do not include in the matched-load average.
+- **POX error:** the pasted controller log contains repeated `AttributeError: type object 'ipv4' has no attribute 'ipv4'` while POX parses ICMP Destination Unreachable messages. The error was in POX's ICMP parser; the UDP flows nevertheless appeared in the switch table with normal output actions. It is a known control-plane parser issue, not evidence by itself that the UDP data plane failed.
+- **Next:** pull the latest `main` into the VM; repeat a baseline and a QoS run with comparable actual sender totals; confirm `end_marker_received: true` before trusting receiver loss fields. Preserve flow dumps and full controller logs.
