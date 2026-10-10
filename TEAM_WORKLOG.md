@@ -347,3 +347,48 @@ Every team member should be able to explain why UDP needs application-level sequ
 - **Receiver results:** high marker received, expected/received 10,987/10,987, 0% loss, 1.5001 Mbps, mean 216.0576 ms, p95 309.9386 ms. Bulk marker received, expected/received 8,767/8,767, 0% loss, 2.8054 Mbps, mean 213.4770 ms, p95 299.9790 ms.
 - **Interpretation:** the receiver fix worked in this run. Total received throughput was about 4.31 Mbps on the configured 5 Mbps link. Bulk load is above the confirmed matched-load trials, so record as an additional baseline point rather than fold it into the matched-load average.
 - **Next:** collect the same run with `qos_controller`; confirm controller ACTIVE and queue 1/2 actions while traffic is flowing. Compare only after checking actual sender totals and both end-marker flags. The bulk sender log was requested in the transcript but no summary line was included; receiver's end marker recorded 8,767 expected packets.
+
+
+### 2026-10-10 — Team task split and next matched QoS trial
+
+This is a proposed split for the next work session so the remaining evidence and review preparation are shared. Coordinate in the team chat; each person should pull before editing and commit one completed step.
+
+- **Sridatta — integration and evidence owner:** keep the shared repo and VM in sync; provide the latest baseline5 result and the controller/topology terminal outputs to the team; review the final comparison for matching sender counts and valid end markers. For the next VM run, help whoever is operating the VM by checking the controller log for an ACTIVE transition and the OVS flow dump. Commit verified CSV/log evidence and update the analysis.
+- **Samarth — QoS VM run owner:** run the adaptive4 procedure in `docs/SETUP_AND_EXPERIMENT.md` using the same 1.5 Mbps high / 8 Mbps bulk settings as baseline5. Save receiver and sender logs under adaptive4 names. Capture the controller's ACTIVE/INACTIVE messages and run `sh ovs-ofctl -O OpenFlow10 dump-flows s1` while traffic is still flowing. Verify port 5001 uses enqueue queue 1, port 5002 uses queue 2, and both end markers are true. Record actual outcomes; do not edit measurements to fit expectations.
+- **Neha — documentation and review owner:** review README, runbook, and analysis for consistency with the submitted approach email; check that the explanation clearly distinguishes controller decision-making from OVS queue scheduling. Add a short demo checklist and limitations/lessons learned to the docs, then commit that documentation. The slide deck remains on hold until the project is complete and Sridatta explicitly confirms to create/update it.
+- **Everyone — final rehearsal:** each person should explain (1) how ports 5001/5002 classify UDP traffic, (2) how the controller detects congestion from port counters and thresholds, (3) how OVS queues 1/2 apply the policy, and (4) what the measured data proves and what it does not. Agree who runs controller, who runs Mininet, and who narrates before the review.
+
+#### Exact adaptive4 commands for the VM operator
+
+First ensure the POX learning-switch process is stopped. In controller terminal 1:
+
+    cd ~/cn-project-/cn-project-
+    git pull origin main
+    PYTHONPATH="$PWD/src" python3 ~/pox/pox.py qos_controller
+
+In topology terminal 2:
+
+    cd ~/cn-project-/cn-project-
+    sudo mn -c
+    sudo python3 src/mininet_topology.py
+
+At the `mininet>` prompt:
+
+    pingall
+    py h3.cmd("python3 /home/link/cn-project-/cn-project-/src/traffic.py receive --seconds 35 --measure-seconds 30 --csv /tmp/adaptive4.csv > /tmp/adaptive4-receiver.log 2>&1 &")
+    py __import__('time').sleep(2)
+    py h1.cmd("python3 /home/link/cn-project-/cn-project-/src/traffic.py send --traffic-class high --seconds 30 --rate-mbps 1.5 > /tmp/high-adaptive4.log 2>&1 &")
+    py h2.cmd("python3 /home/link/cn-project-/cn-project-/src/traffic.py send --traffic-class bulk --seconds 30 --rate-mbps 8 > /tmp/bulk-adaptive4.log 2>&1 &")
+
+While the senders are active, inspect the switch rules:
+
+    sh ovs-ofctl -O OpenFlow10 dump-flows s1
+
+The high UDP flow should show `enqueue:"s1-eth3":1`; bulk should show `enqueue:"s1-eth3":2`. At the POX terminal, retain the log lines showing switch connected and congestion policy ACTIVE. After approximately 36 seconds, retrieve results:
+
+    py print(h3.cmd('cat /tmp/adaptive4-receiver.log; cat /tmp/adaptive4.csv'))
+    py print(h1.cmd('cat /tmp/high-adaptive4.log'))
+    py print(h2.cmd('cat /tmp/bulk-adaptive4.log'))
+
+Only count this as a complete adaptive measurement if the receiver output has `end_marker_received: true` for both classes, sender totals are captured, and controller/flow evidence corresponds to this run. If not, record the run as incomplete and preserve the error/output for troubleshooting.
+
