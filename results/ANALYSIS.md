@@ -38,6 +38,10 @@ Baseline average over all three runs versus adaptive run 1 (adaptive run 1 sende
 
 All baseline runs and adaptive run 1 reported 0% packet loss. This matched-load subset is consistent with the intended latency tradeoff: the high class had lower delay while the bulk class had higher delay. There is one adaptive trial in this load range, so describe it as preliminary evidence rather than a proven general result.
 
+## Switch queue-action verification
+
+During a traffic run, `ovs-ofctl -O OpenFlow10 dump-flows s1` showed the UDP high flow (`tp_dst=5001`) with `actions=enqueue:"s1-eth3":1` and the bulk flow (`tp_dst=5002`) with `actions=enqueue:"s1-eth3":2`. A later dump showed 6,712 high packets and 4,718 bulk packets processed by those respective queue actions. This confirms the controller installed the intended queue-selection actions on the switch during the observed traffic interval.
+
 ## Runs at different actual loads
 
 Adaptive run 2's bulk sender sent 14,864 packets, far above the baseline range. It reported 56.566% bulk loss and 1.829% high-class loss; high p95 delay reached 1,024 ms. The controller logged multiple ACTIVE/INACTIVE transitions. Treat this as a heavier-load stress run, not a direct baseline comparison.
@@ -47,7 +51,7 @@ Adaptive run 3's bulk sender sent 5,028 packets, below the baseline range. Its P
 ## Limitations and next validation
 
 1. Repeat an adaptive run with sender counts close to baseline (about 10.7k–11.0k high and 6.0k–6.4k bulk) to confirm the load-matched result.
-2. Verify Open vSwitch flow/queue selection while the policy is ACTIVE before attributing all changes to queue scheduling.
+2. Queue-action verification is now confirmed by `ovs-ofctl` flow dumps while traffic was running; retain the output as demo evidence.
 3. POX emitted repeated ICMP parsing exceptions during adaptive traffic. The controller nevertheless logged policy state changes; report this as a limitation if it remains unresolved.
 4. Actual generated packet counts differ from the nominal 8 Mbps bulk request. Compare sender counts as well as configured rates.
 
