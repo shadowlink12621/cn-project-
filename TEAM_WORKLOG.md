@@ -300,3 +300,11 @@ Every team member should be able to explain why UDP needs application-level sequ
 - **File naming:** the VM wrote this run under `/tmp/baseline3.csv` and baseline3 log names, but the expected controller setup was the QoS controller. The separate GitHub `results/baseline3.csv` remains the confirmed standard-controller result. This new receiver CSV was preserved as `results/adaptive3.csv` provisionally.
 - **Verification needed:** get the POX log covering this run to confirm the switch connected and whether the QoS policy became ACTIVE. Until then, classify run 3 as a QoS candidate, not a confirmed adaptive result.
 - **Next:** share POX switch/policy messages from this run; then update the analysis classification. The current bulk count (5,028) is lower than the baseline range (5,962–6,368), so treat it as a separate offered-load level unless repeat results match more closely.
+
+
+### 2026-10-10 — Adaptive run 3 controller evidence confirmed
+
+- **Controller log supplied:** switch 1 connected; congestion policy ACTIVE at 87.5% utilization and later INACTIVE at 17.8%.
+- **Classification:** confirms the prior traffic CSV was collected while the QoS controller was connected and activated. Reclassified `results/adaptive3.csv` from provisional candidate to adaptive run 3.
+- **Load caveat:** bulk sent 5,028 packets, lower than the baseline range of 5,962–6,368. Keep it as a different load level; do not merge it into the matched-load comparison.
+- **Documentation:** updated `results/ANALYSIS.md` with policy evidence and corrected run classification.
