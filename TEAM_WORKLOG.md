@@ -178,8 +178,8 @@ Do not fill in results from estimates. Copy each actual CSV and fill out setting
 
 | Run | Controller | Policy | Capacity | High offered rate | Bulk offered rate | Result file | Notes |
 |---|---|---|---:|---:|---:|---|---|
-| Baseline | Standard POX learning switch | No adaptive queue selection | 5 Mbps | 1.5 Mbps | 8 Mbps | Pending | Not run |
-| Adaptive | Team QoS controller | Threshold-triggered queues | 5 Mbps | 1.5 Mbps | 8 Mbps | Pending | Not run |
+| Baseline | Standard POX learning switch | No adaptive queue selection | 5 Mbps | 1.5 Mbps | 8 Mbps | results/baseline.csv | One run; 0% reported loss both classes |
+| Adaptive | Team QoS controller | Threshold-triggered queues; ACTIVE at 77.9%, later INACTIVE at 35.2% | 5 Mbps | 1.5 Mbps | 8 Mbps | results/adaptive.csv | One run; 0% reported loss both classes; high delay lower |
 
 ## 9. Presentation and review checklist
 
@@ -244,3 +244,12 @@ Every team member should be able to explain why UDP needs application-level sequ
 - **Observed:** after POX `forwarding.l2_learning` was started in a separate terminal, it logged switch `00-00-00-00-00-01` connected. Running `pingall` in the existing Mininet CLI then passed with 0% dropped (6/6).
 - **Interpretation:** the earlier “Unable to contact” warning reflected startup order; the switch subsequently connected. Baseline controller and topology are now ready for traffic measurements.
 - **Next:** run the baseline receiver and both senders with the documented sequence and save receiver/sender outputs.
+
+
+### 2026-10-10 — Baseline and adaptive comparison collected
+
+- **Baseline controller:** standard POX `forwarding.l2_learning`; same topology, 5 Mbps egress setting, 30-second senders, high 1.5 Mbps / 512-byte payload, bulk 8 Mbps / 1200-byte payload.
+- **Baseline results:** high 1.5000 Mbps, 0% reported loss, mean delay 291.2616 ms, p95 506.9084 ms; bulk 1.9814 Mbps, 0% loss, mean delay 290.6660 ms, p95 509.3280 ms. Sender counts: high 10,986 packets, bulk 6,192.
+- **Adaptive run results:** high 1.4997 Mbps, 0% reported loss, mean delay 49.7486 ms, p95 253.0573 ms; bulk 1.9136 Mbps, 0% loss, mean delay 353.3140 ms, p95 688.0855 ms. Sender counts: high 10,984, bulk 5,980. Controller log showed ACTIVE at 77.9% utilization and INACTIVE at 35.2%.
+- **Single-run comparison:** high mean delay decreased 82.9% and p95 decreased 50.1%; bulk mean delay increased 21.6% and p95 increased 35.1%; bulk throughput was 3.4% lower. Both receiver reports show 0% loss. Results are consistent with prioritizing high-class latency, but one run per condition is insufficient for a strong statistical claim.
+- **Next:** repeat baseline and adaptive runs at least twice each with the same settings and controller log capture. Ensure baseline is standard learning-switch only and adaptive run reports ACTIVE. Keep all raw CSVs; compare averages across runs. Verify queue-selection actions on OVS if time permits. POX emitted ICMP parsing exceptions during adaptive traffic; record whether they recur.
