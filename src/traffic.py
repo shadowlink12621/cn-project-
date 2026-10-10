@@ -98,7 +98,7 @@ def receive_traffic(args):
         # Inferring expected from the highest received sequence hides tail loss.
         lost = max(0, expected - received) if expected is not None else None
         loss_percent = (round(100.0 * lost / expected, 3)
-                        if expected is not None and expected else None
+                        if expected is not None and expected else None)
         delays = sorted(row["delays_ms"])
         mean_delay = sum(delays) / len(delays) if delays else 0.0
         p95_delay = delays[min(len(delays) - 1, int(0.95 * len(delays)))] if delays else 0.0
