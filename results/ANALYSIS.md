@@ -1,6 +1,6 @@
 # QoS experiment results
 
-**Status:** three baseline runs and three adaptive runs are recorded. Adaptive run 1 is the closest load match; runs 2 and 3 represent different actual bulk loads. Adaptive run 1 has sender counts close to the baseline range and is the best load-matched comparison. Adaptive run 2 is a heavier-load stress run and must be analyzed separately. All findings remain preliminary.
+**Status:** three baseline runs and three adaptive runs are recorded. Adaptive run 1 is the closest load match; runs 2 and 3 represent different actual bulk loads. All findings remain preliminary.
 
 **Topology:** Mininet h1/h2 -> OpenFlow switch s1 -> h3; receiver-facing egress configured at 5 Mbps.  
 **Traffic settings:** high UDP destination port 5001, requested 1.5 Mbps with 512-byte payload; bulk UDP destination port 5002, requested 8 Mbps with 1200-byte payload; each sender ran for 30 seconds.  
@@ -40,11 +40,9 @@ All baseline runs and adaptive run 1 reported 0% packet loss. This matched-load 
 
 ## Runs at different actual loads
 
-Adaptive run 2's bulk sender sent 14,864 packets, far above the baseline range. Adaptive run 3's bulk sender sent 5,028 packets, below the baseline range. Their results should be treated as different load levels rather than direct matched comparisons. Adaptive run 3's POX log confirmed switch connection and policy ACTIVE at 87.5%, later INACTIVE at 17.8%.
+Adaptive run 2's bulk sender sent 14,864 packets, far above the baseline range. It reported 56.566% bulk loss and 1.829% high-class loss; high p95 delay reached 1,024 ms. The controller logged multiple ACTIVE/INACTIVE transitions. Treat this as a heavier-load stress run, not a direct baseline comparison.
 
-## Heavier-load stress run
-
-Adaptive run 2's bulk sender sent 14,864 packets, far above the baseline range. It reported 56.566% bulk loss and 1.829% high-class loss; high p95 delay reached 1,024 ms. This is a separate overload stress run, not a fair direct comparison with the baseline runs. The controller did log multiple ACTIVE/INACTIVE transitions during the run.
+Adaptive run 3's bulk sender sent 5,028 packets, below the baseline range. Its POX log confirmed switch connection and policy ACTIVE at 87.5%, later INACTIVE at 17.8%. Treat it as a separate lower-load point, not a direct matched comparison.
 
 ## Limitations and next validation
 
