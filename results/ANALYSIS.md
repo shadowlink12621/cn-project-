@@ -1,6 +1,6 @@
 # QoS experiment results
 
-**Status:** three baseline runs and three adaptive runs are recorded. Adaptive run 1 is the closest load match; runs 2 and 3 represent different actual bulk loads. All findings remain preliminary.
+**Status:** two confirmed baseline runs and three adaptive runs are recorded. A run saved as `baseline3.csv` was mistakenly labeled baseline; the supplied OpenFlow dump shows QoS queue actions, so it is excluded from baseline calculations. Adaptive run 1 is the closest load match; runs 2 and 3 represent different actual bulk loads. All findings remain preliminary.
 
 **Topology:** Mininet h1/h2 -> OpenFlow switch s1 -> h3; receiver-facing egress configured at 5 Mbps.  
 **Traffic settings:** high UDP destination port 5001, requested 1.5 Mbps with 512-byte payload; bulk UDP destination port 5002, requested 8 Mbps with 1200-byte payload; each sender ran for 30 seconds.  
@@ -25,18 +25,18 @@
 
 ## Load-matched preliminary comparison
 
-Baseline average over all three runs versus adaptive run 1 (adaptive run 1 sender counts were 10,984 high / 5,980 bulk, within the baseline ranges 10,714–10,986 / 5,962–6,368):
+Baseline average over the two confirmed baseline runs versus adaptive run 1 (adaptive run 1 sender counts were 10,984 high / 5,980 bulk, within the confirmed baseline ranges 10,714–10,986 / 5,962–6,192):
 
 | Class | Metric | Baseline average | Adaptive run 1 | Change |
 |---|---|---:|---:|---:|
-| High | Throughput | 1.4804 Mbps | 1.4997 Mbps | +1.3% |
-| High | Mean delay | 293.7165 ms | 49.7486 ms | -83.1% |
-| High | p95 delay | 518.4929 ms | 253.0573 ms | -51.2% |
-| Bulk | Throughput | 1.9757 Mbps | 1.9136 Mbps | -3.1% |
-| Bulk | Mean delay | 293.7408 ms | 353.3140 ms | +20.3% |
-| Bulk | p95 delay | 513.7704 ms | 688.0855 ms | +33.9% |
+| High | Throughput | 1.4814 Mbps | 1.4997 Mbps | +1.3% |
+| High | Mean delay | 296.8220 ms | 49.7486 ms | -83.2% |
+| High | p95 delay | 518.4929 ms | 253.0573 ms | -51.7% |
+| Bulk | Throughput | 1.9446 Mbps | 1.9136 Mbps | -1.6% |
+| Bulk | Mean delay | 296.6548 ms | 353.3140 ms | +19.1% |
+| Bulk | p95 delay | 521.8725 ms | 688.0855 ms | +31.8% |
 
-All baseline runs and adaptive run 1 reported 0% packet loss. This matched-load subset is consistent with the intended latency tradeoff: the high class had lower delay while the bulk class had higher delay. There is one adaptive trial in this load range, so describe it as preliminary evidence rather than a proven general result.
+Both confirmed baseline runs and adaptive run 1 reported 0% packet loss. This matched-load subset is consistent with the intended latency tradeoff: the high class had lower delay while the bulk class had higher delay. There is one adaptive trial in this load range, so describe it as preliminary evidence rather than a proven general result.
 
 ## Switch queue-action verification
 
@@ -57,7 +57,7 @@ Adaptive run 3's bulk sender sent 5,028 packets, below the baseline range. Its P
 
 ## Raw files and reproduction
 
-- Baseline receiver outputs: [baseline.csv](baseline.csv), [baseline2.csv](baseline2.csv), [baseline3.csv](baseline3.csv).
+- Confirmed baseline receiver outputs: [baseline.csv](baseline.csv), [baseline2.csv](baseline2.csv). [baseline3.csv](baseline3.csv) is retained as raw evidence but is misclassified: the matching terminal run's flow dump shows QoS queue actions, so it is excluded from baseline results.
 - Adaptive receiver outputs: [adaptive.csv](adaptive.csv), [adaptive2.csv](adaptive2.csv), [adaptive3.csv](adaptive3.csv).
 - Sender totals: baseline high 10,986/10,714/10,829 and bulk 6,192/5,962/6,368; Adaptive runs high 10,984/10,987/10,987 and bulk 5,980/14,864/5,028.
 - Command sequence and VM setup: [../docs/SETUP_AND_EXPERIMENT.md](../docs/SETUP_AND_EXPERIMENT.md).
