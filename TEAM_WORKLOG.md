@@ -283,3 +283,11 @@ Every team member should be able to explain why UDP needs application-level sequ
 - **Files:** saved as `results/baseline3.csv`; analysis now has three baseline trials and two adaptive trials.
 - **Interpretation:** baseline sender counts are stable around 10.7k–11.0k high packets and 6.0k–6.4k bulk packets. Adaptive run 1 falls in that range; adaptive run 2's 14,864 bulk packets is a distinct heavier-load stress case. Load-matched three-baseline versus one-adaptive-run comparison is included in results/ANALYSIS.md and remains preliminary.
 - **Next:** repeat adaptive at baseline-like packet counts, and capture OVS flow/queue selection during ACTIVE if feasible.
+
+
+### 2026-10-10 — Stale baseline POX process stopped; QoS controller started
+
+- **Cause:** PID 6679 was a detached `python3 -u ./pox.py forwarding.l2_learning` process holding TCP port 6633. SIGINT did not stop it because it was detached.
+- **Fix:** after confirming its command line, sent SIGTERM to PID 6679. `ss` showed port 6633 free afterward.
+- **Result:** `qos_controller` started without the address-in-use error. It has not yet logged a switch connection; this is expected until Mininet starts/connects.
+- **Next:** leave this controller terminal running, create a fresh Mininet topology in another terminal, confirm POX logs switch 1 connected, then run the comparable adaptive trial.
