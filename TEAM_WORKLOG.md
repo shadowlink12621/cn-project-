@@ -230,3 +230,10 @@ Every team member should be able to explain why UDP needs application-level sequ
 - **Diagnosis:** `sudo ss -ltnp 'sport = :6633'` identified PID 5551; `ps` confirmed it was the old `python3 /home/link/pox/pox.py qos_controller` process.
 - **Action/result:** sent SIGINT to PID 5551. The immediate socket listing still showed it, but a subsequent `./pox.py forwarding.l2_learning` started without another bind error. Confirm that the switch connects when Mininet starts.
 - **Next:** keep this baseline POX process running, start a fresh topology from a second terminal, then run the documented baseline measurement with the receiver-first and 2-second wait sequence.
+
+
+### 2026-10-10 — Baseline topology started before controller was reachable
+
+- **Symptom:** topology startup printed `Unable to contact the remote controller at 127.0.0.1:6633`, then still opened the Mininet CLI and configured queues.
+- **Meaning:** at topology startup, no POX controller was reachable on the switch's configured address/port. Queue setup and the Mininet prompt do not confirm controller connectivity.
+- **Next:** keep this Mininet CLI open; start `./pox.py forwarding.l2_learning` in a separate VM terminal and leave it running. Confirm POX logs the switch connection, then return here and run `pingall`. Do not collect baseline measurements until controller connectivity is confirmed.
