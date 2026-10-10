@@ -1,0 +1,3 @@
+class,expected_packets,received_packets,lost_packets,loss_percent,throughput_mbps,mean_delay_ms,p95_delay_ms
+high,10987,10786,201,1.829,1.4726,209.8677,1024.1037
+bulk,14864,6456,8408,56.566,2.0659,951.6863,4283.9836
