@@ -1,9 +1,10 @@
-# Initial QoS experiment comparison
+# QoS experiment results
 
-**Status:** two baseline runs and one adaptive run. Repeat adaptive runs before making strong claims.  
+**Status:** two baseline runs and two adaptive runs are recorded. The adaptive controller logged ACTIVE during both adaptive trials. The comparison remains preliminary because the actual sender packet counts differ substantially between trials, especially for the bulk class.
+
 **Topology:** Mininet h1/h2 -> OpenFlow switch s1 -> h3; receiver-facing egress configured at 5 Mbps.  
-**Traffic:** high UDP port 5001, offered 1.5 Mbps with 512-byte payload; bulk UDP port 5002, offered 8 Mbps with 1200-byte payload; each sender ran for 30 seconds.  
-**Adaptive controller evidence:** POX logged policy ACTIVE at 77.9% utilization and later INACTIVE at 35.2%.
+**Traffic settings:** high UDP destination port 5001, requested 1.5 Mbps with 512-byte payload; bulk UDP destination port 5002, requested 8 Mbps with 1200-byte payload; each sender ran for 30 seconds.  
+**Controller evidence:** first adaptive run logged ACTIVE at 77.9% and later INACTIVE at 35.2%; second adaptive run logged ACTIVE at 83.3% and 92.1%, with INACTIVE messages between activations.
 
 ## Results by run
 
@@ -15,27 +16,25 @@
 | 2 | Baseline | Bulk | 1.9078 Mbps | 0% | 302.6436 ms | 534.4170 ms | 5,962 |
 | 1 | Adaptive | High | 1.4997 Mbps | 0% | 49.7486 ms | 253.0573 ms | 10,984 |
 | 1 | Adaptive | Bulk | 1.9136 Mbps | 0% | 353.3140 ms | 688.0855 ms | 5,980 |
+| 2 | Adaptive | High | 1.4726 Mbps | 1.829% | 209.8677 ms | 1,024.1037 ms | 10,987 |
+| 2 | Adaptive | Bulk | 2.0659 Mbps | 56.566% | 951.6863 ms | 4,283.9836 ms | 14,864 |
 
-## Preliminary comparison
+## Interpretation and limits
 
-Baseline averages (two runs) versus the single adaptive run:
+The two adaptive runs show a differentiated outcome: bulk delay/loss was much higher in the second adaptive run, while high-class throughput stayed near 1.5 Mbps and the first adaptive run showed much lower high-class delay. However, the second adaptive run's bulk sender sent 14,864 packets, compared with 5,962–6,192 in the baseline runs and 5,980 in adaptive run 1. This is a substantial difference in actual load even though the command requested the same rate. Therefore, do not claim a controlled, causal before/after improvement from these trials.
 
-| Class | Metric | Baseline average | Adaptive | Change |
-|---|---|---:|---:|---:|
-| High | Throughput | 1.4814 Mbps | 1.4997 Mbps | +1.2% |
-| High | Mean delay | 296.8220 ms | 49.7486 ms | -83.2% |
-| High | p95 delay | 523.5591 ms | 253.0573 ms | -51.7% |
-| Bulk | Throughput | 1.9446 Mbps | 1.9136 Mbps | -1.6% |
-| Bulk | Mean delay | 296.6548 ms | 353.3140 ms | +19.1% |
-| Bulk | p95 delay | 521.8725 ms | 688.0855 ms | +31.8% |
+Both baseline runs reported no loss. Adaptive run 1 reported no loss; adaptive run 2 reported 1.829% high loss and 56.566% bulk loss. This suggests the controller's active period and offered load matter; high priority was not loss-free in every trial. POX also emitted repeated ICMP parsing exceptions during adaptive runs. The controller nevertheless logged policy state changes.
 
-Both conditions reported 0% packet loss. The current measurements are consistent with a latency tradeoff favoring the high-priority class. The comparison remains preliminary because it uses two baseline runs but only one adaptive run. Run at least two more adaptive trials under identical settings before making a strong statistical claim. The actual bulk sender counts were roughly 5,962–6,192 packets even though the configured offered rate was 8 Mbps; preserve the sender output and avoid describing the result as sustained 8 Mbps delivered traffic.
+## Recommended next validation
 
-POX emitted ICMP parsing exceptions during adaptive traffic. The controller still logged activation and deactivation, but the error should be understood and reported as a limitation if it recurs. Verify queue-selection actions on OVS if time permits before claiming the queue action alone caused the measured difference.
+1. Capture the next baseline and adaptive trials with sender counts and controller logs.
+2. Aim for comparable actual packet counts in each condition, not just the same requested rate. If the sender output differs greatly, label that run as a different load level.
+3. Verify OVS flow/queue selection while the adaptive policy is active before attributing all changes to queue scheduling.
+4. Keep the POX ICMP parser exception as a known limitation unless it is fixed and retested.
 
 ## Raw files and reproduction
 
-- [baseline.csv](baseline.csv) and [baseline2.csv](baseline2.csv): receiver outputs for two baseline runs.
-- [adaptive.csv](adaptive.csv): receiver output for the first adaptive run.
-- Sender outputs: baseline run 1 high 10,986 / bulk 6,192; baseline run 2 high 10,714 / bulk 5,962; adaptive run 1 high 10,984 / bulk 5,980.
-- Command sequence and VM setup: [../docs/SETUP_AND_EXPERIMENT.md](../docs/SETUP_AND_EXPERIMENT.md).
+- Baseline receiver outputs: [baseline.csv](baseline.csv), [baseline2.csv](baseline2.csv).
+- Adaptive receiver outputs: [adaptive.csv](adaptive.csv), [adaptive2.csv](adaptive2.csv).
+- Sender totals: baseline runs high 10,986/10,714 and bulk 6,192/5,962; adaptive runs high 10,984/10,987 and bulk 5,980/14,864.
+- Commands and setup: [../docs/SETUP_AND_EXPERIMENT.md](../docs/SETUP_AND_EXPERIMENT.md).
