@@ -273,3 +273,13 @@ Every team member should be able to explain why UDP needs application-level sequ
 - **Files:** raw receiver result saved as `results/adaptive2.csv`; analysis now includes both adaptive runs and caveats.
 - **Interpretation:** the run shows strong bulk degradation under higher actual bulk packet load, while high traffic remains near its requested throughput but is not loss-free and has a long p95 delay. Actual bulk send count was far above the ~6,000 packets in baseline trials, so this is not a load-matched comparison.
 - **Next:** do not report this as a controlled before/after comparison. Collect a baseline at comparable actual packet counts and/or repeat with a stable traffic source. Verify Open vSwitch queue selection during ACTIVE if feasible. Preserve the POX ICMP parsing exception as a known limitation unless fixed and re-verified.
+
+
+### 2026-10-10 — Third baseline trial completed
+
+- **Reachability:** pingall reported 0% dropped (6/6).
+- **Baseline high:** 10,829 sender/receiver packets, 0% loss, 1.4785 Mbps, 287.5054 ms mean, 508.3606 ms p95.
+- **Baseline bulk:** 6,368 sender/receiver packets, 0% loss, 2.0378 Mbps, 287.9129 ms mean, 497.5662 ms p95.
+- **Files:** saved as `results/baseline3.csv`; analysis now has three baseline trials and two adaptive trials.
+- **Interpretation:** baseline sender counts are stable around 10.7k–11.0k high packets and 6.0k–6.4k bulk packets. Adaptive run 1 falls in that range; adaptive run 2's 14,864 bulk packets is a distinct heavier-load stress case. Load-matched three-baseline versus one-adaptive-run comparison is included in results/ANALYSIS.md and remains preliminary.
+- **Next:** repeat adaptive at baseline-like packet counts, and capture OVS flow/queue selection during ACTIVE if feasible.
