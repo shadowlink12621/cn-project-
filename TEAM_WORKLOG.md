@@ -317,3 +317,12 @@ Every team member should be able to explain why UDP needs application-level sequ
 - **Counters:** an early dump showed 1,559 high and 616 bulk packets; a later dump showed 6,712 high and 4,718 bulk packets, still using queue 1 and queue 2 respectively.
 - **Interpretation:** confirms the switch received and applied the intended per-class enqueue actions while these flows were active. The earlier blank dump was taken after the traffic had ended/policy rules had expired or been removed; capture during active traffic.
 - **Documentation:** added the switch-flow evidence to `results/ANALYSIS.md`. Preserve this terminal output or capture a screenshot for the final presentation.
+
+
+### 2026-10-10 — Correction: run saved as baseline3.csv had QoS queue actions
+
+- **New evidence:** the latest terminal transcript contains receiver metrics identical to the repository's `results/baseline3.csv` (high 10,829 packets; bulk 6,368 packets) and an OVS flow dump from that traffic interval. The dump routes UDP 5001 to queue 1 and UDP 5002 to queue 2 with increasing counters.
+- **Correction:** those enqueue actions are the custom QoS behavior. Therefore this run cannot be treated as a baseline. The prior worklog entry and analysis that counted it as the third baseline are superseded. Keep the raw CSV for traceability, but exclude it from all baseline means and conclusions until a separate, verified no-policy run replaces it.
+- **Revised baseline set:** only `results/baseline.csv` and `results/baseline2.csv` are confirmed baseline runs. Their averages are high: 1.4814 Mbps, 296.8220 ms mean, 523.5591 ms p95; bulk: 1.9446 Mbps, 296.6548 ms mean, 521.8725 ms p95.
+- **Verified switch behavior:** during the same observed traffic interval, flow counters increased to 6,712 high packets and 4,718 bulk packets, with actions `enqueue:"s1-eth3":1` and `enqueue:"s1-eth3":2` respectively.
+- **Next:** update any copies of the report/PPT using two baseline trials, then collect at least one genuine baseline run using only `forwarding.l2_learning`; verify the two UDP flows use normal output actions rather than queue enqueue actions before saving it under a baseline filename.
