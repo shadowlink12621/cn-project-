@@ -253,3 +253,13 @@ Every team member should be able to explain why UDP needs application-level sequ
 - **Adaptive run results:** high 1.4997 Mbps, 0% reported loss, mean delay 49.7486 ms, p95 253.0573 ms; bulk 1.9136 Mbps, 0% loss, mean delay 353.3140 ms, p95 688.0855 ms. Sender counts: high 10,984, bulk 5,980. Controller log showed ACTIVE at 77.9% utilization and INACTIVE at 35.2%.
 - **Single-run comparison:** high mean delay decreased 82.9% and p95 decreased 50.1%; bulk mean delay increased 21.6% and p95 increased 35.1%; bulk throughput was 3.4% lower. Both receiver reports show 0% loss. Results are consistent with prioritizing high-class latency, but one run per condition is insufficient for a strong statistical claim.
 - **Next:** repeat baseline and adaptive runs at least twice each with the same settings and controller log capture. Ensure baseline is standard learning-switch only and adaptive run reports ACTIVE. Keep all raw CSVs; compare averages across runs. Verify queue-selection actions on OVS if time permits. POX emitted ICMP parsing exceptions during adaptive traffic; record whether they recur.
+
+
+### 2026-10-10 — Second baseline trial completed
+
+- **Run:** standard POX learning switch; same 5 Mbps topology and UDP settings as baseline run 1.
+- **High class:** 1.4628 Mbps, 0% loss, 302.3824 ms mean delay, 540.2097 ms p95; 10,714 sender packets.
+- **Bulk class:** 1.9078 Mbps, 0% loss, 302.6436 ms mean delay, 534.4170 ms p95; 5,962 sender packets.
+- **Files:** raw receiver output saved as `results/baseline2.csv`; `results/ANALYSIS.md` now compares two baseline runs against the first adaptive run.
+- **Current evidence:** baseline two-run averages are high mean 296.8220 ms / p95 523.5591 ms and bulk mean 296.6548 ms / p95 521.8725 ms. One adaptive run shows high mean/p95 49.7486/253.0573 ms and bulk 353.3140/688.0855 ms. This is a preliminary latency tradeoff comparison, not yet a repeated adaptive result.
+- **Next:** collect adaptive run 2 and run 3 using the same traffic parameters; controller must be `qos_controller`, and its log should include ACTIVE. Then update analysis using the adaptive-run average.
