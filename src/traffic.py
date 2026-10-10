@@ -65,7 +65,7 @@ def receive_traffic(args):
         sockets[sock] = name
 
     stats = {
-        name: {"sequences": set(), "expected": None, "bytes": 0, "delays_ms": []}
+        name: {"sequences": set(), "expected": None, "end_marker_received": False, "bytes": 0, "delays_ms": []}
         for name in CLASSES
     }
     deadline = time.monotonic() + args.seconds
@@ -78,6 +78,7 @@ def receive_traffic(args):
             if len(data) >= END.size and data[:4] == b"QEND":
                 _, expected = END.unpack(data[:END.size])
                 row["expected"] = max(expected, row["expected"] or 0)
+                row["end_marker_received"] = True
                 continue
             if len(data) < DATA.size:
                 continue
@@ -93,18 +94,21 @@ def receive_traffic(args):
         row = stats[name]
         received = len(row["sequences"])
         expected = row["expected"]
-        if expected is None:
-            expected = (max(row["sequences"]) + 1) if row["sequences"] else 0
-        lost = max(0, expected - received)
+        # Without a sender END marker, the tail of the stream is unknown.
+        # Inferring expected from the highest received sequence hides tail loss.
+        lost = max(0, expected - received) if expected is not None else None
+        loss_percent = (round(100.0 * lost / expected, 3)
+                        if expected is not None and expected else None
         delays = sorted(row["delays_ms"])
         mean_delay = sum(delays) / len(delays) if delays else 0.0
         p95_delay = delays[min(len(delays) - 1, int(0.95 * len(delays)))] if delays else 0.0
         rows.append({
             "class": name,
+            "end_marker_received": row["end_marker_received"],
             "expected_packets": expected,
             "received_packets": received,
             "lost_packets": lost,
-            "loss_percent": round(100.0 * lost / expected, 3) if expected else 0.0,
+            "loss_percent": loss_percent,
             "throughput_mbps": round(row["bytes"] * 8 / (args.measure_seconds * 1_000_000), 4),
             "mean_delay_ms": round(mean_delay, 4),
             "p95_delay_ms": round(p95_delay, 4),
