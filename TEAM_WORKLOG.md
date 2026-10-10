@@ -308,3 +308,12 @@ Every team member should be able to explain why UDP needs application-level sequ
 - **Classification:** confirms the prior traffic CSV was collected while the QoS controller was connected and activated. Reclassified `results/adaptive3.csv` from provisional candidate to adaptive run 3.
 - **Load caveat:** bulk sent 5,028 packets, lower than the baseline range of 5,962–6,368. Keep it as a different load level; do not merge it into the matched-load comparison.
 - **Documentation:** updated `results/ANALYSIS.md` with policy evidence and corrected run classification.
+
+
+### 2026-10-10 — OVS queue-selection rules verified during traffic
+
+- **Command:** `sh ovs-ofctl -O OpenFlow10 dump-flows s1` at the Mininet prompt during a QoS traffic run.
+- **Observed flow actions:** UDP destination port 5001 / high class showed `actions=enqueue:"s1-eth3":1`; UDP destination port 5002 / bulk class showed `actions=enqueue:"s1-eth3":2`.
+- **Counters:** an early dump showed 1,559 high and 616 bulk packets; a later dump showed 6,712 high and 4,718 bulk packets, still using queue 1 and queue 2 respectively.
+- **Interpretation:** confirms the switch received and applied the intended per-class enqueue actions while these flows were active. The earlier blank dump was taken after the traffic had ended/policy rules had expired or been removed; capture during active traffic.
+- **Documentation:** added the switch-flow evidence to `results/ANALYSIS.md`. Preserve this terminal output or capture a screenshot for the final presentation.
