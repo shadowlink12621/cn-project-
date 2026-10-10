@@ -56,7 +56,7 @@ Wait about 36 seconds, then inspect the measurements:
     py print(h1.cmd('cat /tmp/high-baseline.log'))
     py print(h2.cmd('cat /tmp/bulk-baseline.log'))
 
-The first CSV row is the high-priority flow; the second is the bulk flow. Save the output before the next run.
+The first CSV row is the high-priority flow; the second is the bulk flow. Save the output before the next run. Also save both sender summaries. Check that the receiver reports `end_marker_received: true`; if it is false or the sender total exceeds receiver expected count, mark loss as unknown and do not quote the receiver's loss percentage.
 
 ## 5. Run with adaptive QoS
 
@@ -89,9 +89,9 @@ After the run, exit Mininet. Copy the CSV files into the repository's results di
 ## 6. Metrics and interpretation
 
 The receiver reports:
-
 - **Throughput:** unique UDP traffic bytes received, divided by the configured 30-second send window.
 - **Packet loss:** sent sequence count from the sender's end marker minus unique sequence numbers received.
+- **End-marker status:** `end_marker_received` must be `true` for receiver-computed loss to be valid. If false, expected/lost/loss percentage are blank/null because the receiver cannot infer packets that may have been lost at the end of the stream. Compare sender totals with unique received counts or repeat the run.
 - **Delay:** average and 95th-percentile one-way time difference between the sender and receiver clocks. Both processes run inside the same VM, so they share the system clock.
 
 Use the same offered rates, packet sizes, link capacity, and run duration for both runs. Do not claim an improvement until the actual CSV results support it. The adaptive policy should direct UDP port 5001 to queue 1 and port 5002 to queue 2 only while the measured egress utilization is at least 70%; it returns to baseline below 50%.
