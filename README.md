@@ -151,7 +151,7 @@ Look for UDP destination port **5001** with `enqueue:"s1-eth3":1`, and port **50
 - Repeat at least three comparable trials per condition when possible.
 
 > [!WARNING]
- >
+> The run saved as `baseline3.csv` showed QoS queue actions and is excluded from baseline averages. Baseline stress run 4 showed normal `output` actions, but the receiver missed end markers; its receiver-reported 0% loss is invalid. See `results/ANALYSIS.md` and `results/baseline4_reconciled.csv`.
 
 </details>
 
