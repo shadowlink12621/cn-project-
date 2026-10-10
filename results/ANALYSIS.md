@@ -1,10 +1,10 @@
 # QoS experiment results
 
-**Status:** three baseline runs and three QoS candidate runs are recorded; the third candidate's POX activation log is still unconfirmed. Adaptive run 1 has sender counts close to the baseline range and is the best load-matched comparison. Adaptive run 2 is a heavier-load stress run and must be analyzed separately. All findings remain preliminary.
+**Status:** three baseline runs and three adaptive runs are recorded. Adaptive run 1 is the closest load match; runs 2 and 3 represent different actual bulk loads. Adaptive run 1 has sender counts close to the baseline range and is the best load-matched comparison. Adaptive run 2 is a heavier-load stress run and must be analyzed separately. All findings remain preliminary.
 
 **Topology:** Mininet h1/h2 -> OpenFlow switch s1 -> h3; receiver-facing egress configured at 5 Mbps.  
 **Traffic settings:** high UDP destination port 5001, requested 1.5 Mbps with 512-byte payload; bulk UDP destination port 5002, requested 8 Mbps with 1200-byte payload; each sender ran for 30 seconds.  
-**Controller evidence:** adaptive run 1 logged ACTIVE at 77.9% and later INACTIVE at 35.2%; adaptive run 2 logged ACTIVE at 83.3% and 92.1%, with INACTIVE messages between activations.
+**Controller evidence:** adaptive run 1 logged ACTIVE at 77.9% and later INACTIVE at 35.2%; adaptive run 2 logged ACTIVE at 83.3% and 92.1%, with INACTIVE messages between activations; adaptive run 3 logged ACTIVE at 87.5% and later INACTIVE at 17.8%.
 
 ## Results by run
 
@@ -20,8 +20,8 @@
 | 1 | Adaptive | Bulk | 1.9136 Mbps | 0% | 353.3140 ms | 688.0855 ms | 5,980 |
 | 2 | Adaptive | High | 1.4726 Mbps | 1.829% | 209.8677 ms | 1,024.1037 ms | 10,987 |
 | 2 | Adaptive stress | Bulk | 2.0659 Mbps | 56.566% | 951.6863 ms | 4,283.9836 ms | 14,864 |
-| 3* | QoS candidate | High | 1.5001 Mbps | 0% | 144.5412 ms | 422.8083 ms | 10,987 |
-| 3* | QoS candidate | Bulk | 1.6090 Mbps | 0% | 578.8457 ms | 2,452.5831 ms | 5,028 |
+| 3 | Adaptive | High | 1.5001 Mbps | 0% | 144.5412 ms | 422.8083 ms | 10,987 |
+| 3 | Adaptive | Bulk | 1.6090 Mbps | 0% | 578.8457 ms | 2,452.5831 ms | 5,028 |
 
 ## Load-matched preliminary comparison
 
@@ -38,7 +38,9 @@ Baseline average over all three runs versus adaptive run 1 (adaptive run 1 sende
 
 All baseline runs and adaptive run 1 reported 0% packet loss. This matched-load subset is consistent with the intended latency tradeoff: the high class had lower delay while the bulk class had higher delay. There is one adaptive trial in this load range, so describe it as preliminary evidence rather than a proven general result.
 
-*Run 3 used the QoS controller by the intended terminal sequence, but the controller log from this particular run has not yet been shared. Keep it provisional until its switch connection and ACTIVE/INACTIVE messages are confirmed.
+## Runs at different actual loads
+
+Adaptive run 2's bulk sender sent 14,864 packets, far above the baseline range. Adaptive run 3's bulk sender sent 5,028 packets, below the baseline range. Their results should be treated as different load levels rather than direct matched comparisons. Adaptive run 3's POX log confirmed switch connection and policy ACTIVE at 87.5%, later INACTIVE at 17.8%.
 
 ## Heavier-load stress run
 
@@ -55,5 +57,5 @@ Adaptive run 2's bulk sender sent 14,864 packets, far above the baseline range. 
 
 - Baseline receiver outputs: [baseline.csv](baseline.csv), [baseline2.csv](baseline2.csv), [baseline3.csv](baseline3.csv).
 - Adaptive receiver outputs: [adaptive.csv](adaptive.csv), [adaptive2.csv](adaptive2.csv), [adaptive3.csv](adaptive3.csv).
-- Sender totals: baseline high 10,986/10,714/10,829 and bulk 6,192/5,962/6,368; QoS candidates high 10,984/10,987/10,987 and bulk 5,980/14,864/5,028.
+- Sender totals: baseline high 10,986/10,714/10,829 and bulk 6,192/5,962/6,368; Adaptive runs high 10,984/10,987/10,987 and bulk 5,980/14,864/5,028.
 - Command sequence and VM setup: [../docs/SETUP_AND_EXPERIMENT.md](../docs/SETUP_AND_EXPERIMENT.md).
