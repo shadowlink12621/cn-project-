@@ -102,3 +102,21 @@ Use the same offered rates, packet sizes, link capacity, and run duration for bo
 - **Switch does not connect:** confirm the controller is still running on port 6633 and that Mininet uses OpenFlow 1.0.
 - **Queue setup fails:** capture the complete error from the topology terminal and run sudo ovs-vsctl show after exiting Mininet.
 - **A port is already in use:** exit Mininet, stop the controller with Ctrl+C, then run sudo mn -c before starting again.
+
+
+## 7. Team handoff for the next run
+
+Suggested task split for Team 14:
+
+- **Sridatta:** coordinate the integration, keep track of valid baseline/QoS evidence, and update the results analysis after the next run.
+- **Samarth:** operate the VM for the next adaptive QoS trial; capture sender counts, receiver CSV, controller ACTIVE messages, and the OpenFlow flow dump.
+- **Neha:** review the project explanation and docs against the submitted proposal, add the final demo checklist/limitations, and help each teammate rehearse the packet path and results.
+- **All three:** review actual numbers together and agree who runs the live demo. These are proposed roles; coordinate with each other before the review.
+
+Do not create or revise the slide deck until the project is complete and Sridatta confirms.
+
+For the next adaptive trial, use unique `adaptive4` paths and keep the same traffic parameters as the latest baseline. Start the QoS controller in one VM terminal, start a fresh topology in a second terminal, and run the commands in Section 5 after substituting `adaptive4` for `adaptive`. While packets are flowing, run this at the Mininet prompt:
+
+    sh ovs-ofctl -O OpenFlow10 dump-flows s1
+
+Retain evidence that the policy became ACTIVE, port 5001 used enqueue queue 1, and port 5002 used enqueue queue 2. Retrieve receiver and sender logs with the `py print(hN.cmd(...))` pattern. A usable result requires both receiver end markers to be true and the sender totals to be saved.
