@@ -45,14 +45,16 @@ For the baseline, the controller should be the standard POX learning switch rath
 
 At the Mininet prompt, launch the receiver first, then both senders:
 
-    h3 python3 /home/link/cn-project-/cn-project-/src/traffic.py receive --seconds 35 --measure-seconds 30 --csv /tmp/baseline.csv > /tmp/baseline-receiver.log 2>&1 &
-    h1 python3 /home/link/cn-project-/cn-project-/src/traffic.py send --traffic-class high --seconds 30 --rate-mbps 1.5 &
-    h2 python3 /home/link/cn-project-/cn-project-/src/traffic.py send --traffic-class bulk --seconds 30 --rate-mbps 8 &
+    py h3.cmd("python3 /home/link/cn-project-/cn-project-/src/traffic.py receive --seconds 35 --measure-seconds 30 --csv /tmp/baseline.csv > /tmp/baseline-receiver.log 2>&1 &")
+    py __import__('time').sleep(2)
+    py h1.cmd("python3 /home/link/cn-project-/cn-project-/src/traffic.py send --traffic-class high --seconds 30 --rate-mbps 1.5 >/tmp/high-baseline.log 2>&1 &")
+    py h2.cmd("python3 /home/link/cn-project-/cn-project-/src/traffic.py send --traffic-class bulk --seconds 30 --rate-mbps 8 >/tmp/bulk-baseline.log 2>&1 &")
 
 Wait about 36 seconds, then inspect the measurements:
 
-    h3 cat /tmp/baseline-receiver.log
-    h3 cat /tmp/baseline.csv
+    py print(h3.cmd('cat /tmp/baseline-receiver.log; cat /tmp/baseline.csv'))
+    py print(h1.cmd('cat /tmp/high-baseline.log'))
+    py print(h2.cmd('cat /tmp/bulk-baseline.log'))
 
 The first CSV row is the high-priority flow; the second is the bulk flow. Save the output before the next run.
 
@@ -71,14 +73,16 @@ In another terminal, start the topology again:
 
 At the Mininet prompt, repeat the same receiver and sender commands, changing the result paths from baseline to adaptive:
 
-    h3 python3 /home/link/cn-project-/cn-project-/src/traffic.py receive --seconds 35 --measure-seconds 30 --csv /tmp/adaptive.csv > /tmp/adaptive-receiver.log 2>&1 &
-    h1 python3 /home/link/cn-project-/cn-project-/src/traffic.py send --traffic-class high --seconds 30 --rate-mbps 1.5 &
-    h2 python3 /home/link/cn-project-/cn-project-/src/traffic.py send --traffic-class bulk --seconds 30 --rate-mbps 8 &
+    py h3.cmd("python3 /home/link/cn-project-/cn-project-/src/traffic.py receive --seconds 35 --measure-seconds 30 --csv /tmp/adaptive.csv > /tmp/adaptive-receiver.log 2>&1 &")
+    py __import__('time').sleep(2)
+    py h1.cmd("python3 /home/link/cn-project-/cn-project-/src/traffic.py send --traffic-class high --seconds 30 --rate-mbps 1.5 >/tmp/high-adaptive.log 2>&1 &")
+    py h2.cmd("python3 /home/link/cn-project-/cn-project-/src/traffic.py send --traffic-class bulk --seconds 30 --rate-mbps 8 >/tmp/bulk-adaptive.log 2>&1 &")
 
 Check that the controller reports congestion and the policy changing to ACTIVE:
 
-    h3 cat /tmp/adaptive-receiver.log
-    h3 cat /tmp/adaptive.csv
+    py print(h3.cmd('cat /tmp/adaptive-receiver.log; cat /tmp/adaptive.csv'))
+    py print(h1.cmd('cat /tmp/high-adaptive.log'))
+    py print(h2.cmd('cat /tmp/bulk-adaptive.log'))
 
 After the run, exit Mininet. Copy the CSV files into the repository's results directory only after confirming the rows contain real output. Record the controller log and experiment settings alongside them.
 
