@@ -54,13 +54,13 @@ During a traffic run, `ovs-ofctl -O OpenFlow10 dump-flows s1` showed the UDP hig
 
 ## Runs at different actual loads
 
-Adaptive run 2's bulk sender sent 14,864 packets, far above the baseline range. It reported 56.566% bulk loss and 1.829% high-class loss; high p95 delay reached 1,024 ms. The controller logged multiple ACTIVE/INACTIVE transitions. Treat this as a heavier-load stress run, not a direct baseline comparison.
+Adaptive run 2's bulk sender sent 14,864 packets, far above the confirmed matched-load baseline range. It reported 56.566% bulk loss and 1.829% high-class loss; high p95 delay reached 1,024 ms. The controller logged multiple ACTIVE/INACTIVE transitions. Treat this as a heavier-load stress run, not a direct baseline comparison.
 
-Adaptive run 3's bulk sender sent 5,028 packets, below the baseline range. Its POX log confirmed switch connection and policy ACTIVE at 87.5%, later INACTIVE at 17.8%. Treat it as a separate lower-load point, not a direct matched comparison.
+Adaptive run 3's bulk sender sent 5,028 packets, below the confirmed matched-load baseline range. Its POX log confirmed switch connection and policy ACTIVE at 87.5%, later INACTIVE at 17.8%. Treat it as a separate lower-load point, not a direct matched comparison.
 
 ## Limitations and next validation
 
-1. Repeat an adaptive run with sender counts close to baseline (about 10.7k–11.0k high and 6.0k–6.4k bulk) to confirm the load-matched result.
+1. Repeat matched-load baseline and QoS runs with sender counts near the confirmed baseline ranges (about 10.7k–11.0k high and 6.0k–6.2k bulk); confirm `end_marker_received: true` before using receiver loss fields.
 2. Queue-action verification is now confirmed by `ovs-ofctl` flow dumps while traffic was running; retain the output as demo evidence.
 3. POX emitted repeated ICMP parsing exceptions during adaptive traffic. The controller nevertheless logged policy state changes; report this as a limitation if it remains unresolved.
 4. Actual generated packet counts differ from the nominal 8 Mbps bulk request. Compare sender counts as well as configured rates.
