@@ -263,3 +263,13 @@ Every team member should be able to explain why UDP needs application-level sequ
 - **Files:** raw receiver output saved as `results/baseline2.csv`; `results/ANALYSIS.md` now compares two baseline runs against the first adaptive run.
 - **Current evidence:** baseline two-run averages are high mean 296.8220 ms / p95 523.5591 ms and bulk mean 296.6548 ms / p95 521.8725 ms. One adaptive run shows high mean/p95 49.7486/253.0573 ms and bulk 353.3140/688.0855 ms. This is a preliminary latency tradeoff comparison, not yet a repeated adaptive result.
 - **Next:** collect adaptive run 2 and run 3 using the same traffic parameters; controller must be `qos_controller`, and its log should include ACTIVE. Then update analysis using the adaptive-run average.
+
+
+### 2026-10-10 — Adaptive run 2 completed under higher bulk load
+
+- **Controller:** custom `qos_controller` connected to the switch. During this run it logged ACTIVE at 83.3%, INACTIVE at 46.1%, ACTIVE at 92.1%, then INACTIVE at 25.5%. This confirms repeated threshold transitions.
+- **High class:** 10,987 sent; 10,786 received; 201 lost (1.829%); 1.4726 Mbps; mean delay 209.8677 ms; p95 1,024.1037 ms.
+- **Bulk class:** 14,864 sent; 6,456 received; 8,408 lost (56.566%); 2.0659 Mbps; mean delay 951.6863 ms; p95 4,283.9836 ms.
+- **Files:** raw receiver result saved as `results/adaptive2.csv`; analysis now includes both adaptive runs and caveats.
+- **Interpretation:** the run shows strong bulk degradation under higher actual bulk packet load, while high traffic remains near its requested throughput but is not loss-free and has a long p95 delay. Actual bulk send count was far above the ~6,000 packets in baseline trials, so this is not a load-matched comparison.
+- **Next:** do not report this as a controlled before/after comparison. Collect a baseline at comparable actual packet counts and/or repeat with a stable traffic source. Verify Open vSwitch queue selection during ACTIVE if feasible. Preserve the POX ICMP parsing exception as a known limitation unless fixed and re-verified.
