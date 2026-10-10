@@ -237,3 +237,10 @@ Every team member should be able to explain why UDP needs application-level sequ
 - **Symptom:** topology startup printed `Unable to contact the remote controller at 127.0.0.1:6633`, then still opened the Mininet CLI and configured queues.
 - **Meaning:** at topology startup, no POX controller was reachable on the switch's configured address/port. Queue setup and the Mininet prompt do not confirm controller connectivity.
 - **Next:** keep this Mininet CLI open; start `./pox.py forwarding.l2_learning` in a separate VM terminal and leave it running. Confirm POX logs the switch connection, then return here and run `pingall`. Do not collect baseline measurements until controller connectivity is confirmed.
+
+
+### 2026-10-10 — Baseline controller connected after topology startup
+
+- **Observed:** after POX `forwarding.l2_learning` was started in a separate terminal, it logged switch `00-00-00-00-00-01` connected. Running `pingall` in the existing Mininet CLI then passed with 0% dropped (6/6).
+- **Interpretation:** the earlier “Unable to contact” warning reflected startup order; the switch subsequently connected. Baseline controller and topology are now ready for traffic measurements.
+- **Next:** run the baseline receiver and both senders with the documented sequence and save receiver/sender outputs.
