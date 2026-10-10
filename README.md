@@ -238,7 +238,8 @@ POX 0.7 may warn that Python 3.12 is outside its documented support range. The p
 - [x] UDP senders and receiver implemented
 - [x] SDN congestion controller and queue actions observed
 - [x] OVS flow table verified queue 1 / queue 2 mapping
-- [x] Re-run baseline with end-marker validation and verify normal output actions\n- [ ] Repeat the run with qos_controller; compare after checking actual packet counts
+- [x] Re-run baseline with end-marker validation and verify normal output actions
+- [ ] Repeat the run with qos_controller; compare after checking actual packet counts
 - [ ] Update final analysis from only correctly labeled runs
 - [ ] Present and demonstrate the final results
 
