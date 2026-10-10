@@ -14,8 +14,6 @@
 | 1 | Baseline | Bulk | 1.9814 Mbps | 0% | 290.6660 ms | 509.3280 ms | 6,192 |
 | 2 | Baseline | High | 1.4628 Mbps | 0% | 302.3824 ms | 540.2097 ms | 10,714 |
 | 2 | Baseline | Bulk | 1.9078 Mbps | 0% | 302.6436 ms | 534.4170 ms | 5,962 |
-| 3 | Baseline | High | 1.4785 Mbps | 0% | 287.5054 ms | 508.3606 ms | 10,829 |
-| 3 | Baseline | Bulk | 2.0378 Mbps | 0% | 287.9129 ms | 497.5662 ms | 6,368 |
 | 4 | Baseline stress | High | 1.0521 Mbps | 29.856%* | 159.2145 ms | 314.8757 ms | 10,986 |
 | 4 | Baseline stress | Bulk | 1.2454 Mbps | 55.848%* | 228.3658 ms | 326.4109 ms | 8,815 |
 | 1 | Adaptive | High | 1.4997 Mbps | 0% | 49.7486 ms | 253.0573 ms | 10,984 |
@@ -25,7 +23,9 @@
 | 3 | Adaptive | High | 1.5001 Mbps | 0% | 144.5412 ms | 422.8083 ms | 10,987 |
 | 3 | Adaptive | Bulk | 1.6090 Mbps | 0% | 578.8457 ms | 2,452.5831 ms | 5,028 |
 
-*Run 4 loss is reconciled from sender totals minus unique packets received because the receiver missed the QEND end marker; see `results/baseline4_reconciled.csv`. The receiver's own 0% loss figure for this run is invalid. This higher bulk-load run is not part of the matched-load average.\n\n## Load-matched preliminary comparison
+*Run 4 loss is reconciled from sender totals minus unique packets received because the receiver missed the QEND end marker; see `results/baseline4_reconciled.csv`. The receiver's own 0% loss figure for this run is invalid. This higher bulk-load run is not part of the matched-load average.
+
+## Load-matched preliminary comparison
 
 Baseline average over the two confirmed baseline runs versus adaptive run 1 (adaptive run 1 sender counts were 10,984 high / 5,980 bulk, within the confirmed baseline ranges 10,714–10,986 / 5,962–6,192):
 
@@ -67,7 +67,7 @@ Adaptive run 3's bulk sender sent 5,028 packets, below the baseline range. Its P
 
 ## Raw files and reproduction
 
-- Confirmed baseline receiver outputs: [baseline.csv](baseline.csv), [baseline2.csv](baseline2.csv). [baseline3.csv](baseline3.csv) is retained as raw evidence but is misclassified: the matching terminal run's flow dump shows QoS queue actions, so it is excluded from baseline results.
+- Confirmed matched-load baseline outputs: [baseline.csv](baseline.csv), [baseline2.csv](baseline2.csv). [baseline3.csv](baseline3.csv) is excluded because its matching flow dump showed QoS queue actions. [baseline4_reconciled.csv](baseline4_reconciled.csv) records the genuine no-QoS stress run and loss derived from sender/receiver totals.
 - Adaptive receiver outputs: [adaptive.csv](adaptive.csv), [adaptive2.csv](adaptive2.csv), [adaptive3.csv](adaptive3.csv).
-- Sender totals: baseline high 10,986/10,714/10,829 and bulk 6,192/5,962/6,368; Adaptive runs high 10,984/10,987/10,987 and bulk 5,980/14,864/5,028.
+- Sender totals: confirmed matched-load baseline high 10,986/10,714 and bulk 6,192/5,962; baseline stress run 4 high 10,986 and bulk 8,815; Adaptive runs high 10,984/10,987/10,987 and bulk 5,980/14,864/5,028.
 - Command sequence and VM setup: [../docs/SETUP_AND_EXPERIMENT.md](../docs/SETUP_AND_EXPERIMENT.md).
