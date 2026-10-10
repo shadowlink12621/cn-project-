@@ -15,7 +15,9 @@
 | 2 | Baseline | High | 1.4628 Mbps | 0% | 302.3824 ms | 540.2097 ms | 10,714 |
 | 2 | Baseline | Bulk | 1.9078 Mbps | 0% | 302.6436 ms | 534.4170 ms | 5,962 |
 | 4 | Baseline stress | High | 1.0521 Mbps | 29.856%* | 159.2145 ms | 314.8757 ms | 10,986 |
-| 4 | Baseline stress | Bulk | 1.2454 Mbps | 55.848%* | 228.3658 ms | 326.4109 ms | 8,815 |\n| 5 | Baseline extra | High | 1.5001 Mbps | 0% | 216.0576 ms | 309.9386 ms | 10,987 |\n| 5 | Baseline extra | Bulk | 2.8054 Mbps | 0% | 213.4770 ms | 299.9790 ms | 8,767 |
+| 4 | Baseline stress | Bulk | 1.2454 Mbps | 55.848%* | 228.3658 ms | 326.4109 ms | 8,815 |
+| 5 | Baseline extra | High | 1.5001 Mbps | 0% | 216.0576 ms | 309.9386 ms | 10,987 |
+| 5 | Baseline extra | Bulk | 2.8054 Mbps | 0% | 213.4770 ms | 299.9790 ms | 8,767 |
 | 1 | Adaptive | High | 1.4997 Mbps | 0% | 49.7486 ms | 253.0573 ms | 10,984 |
 | 1 | Adaptive | Bulk | 1.9136 Mbps | 0% | 353.3140 ms | 688.0855 ms | 5,980 |
 | 2 | Adaptive | High | 1.4726 Mbps | 1.829% | 209.8677 ms | 1,024.1037 ms | 10,987 |
@@ -44,7 +46,9 @@ Both confirmed baseline runs and adaptive run 1 reported 0% packet loss. This ma
 
 The flow dump during baseline run 4 showed normal forwarding for both classes: UDP 5001 and UDP 5002 each had `actions=output:"s1-eth3"`, with no `enqueue` action. This verifies the no-QoS baseline mode.
 
-Sender summaries reported 10,986 high packets and 8,815 bulk packets sent. The receiver counted 7,706 high and 3,892 bulk unique packets, but its CSV said 0% loss because it had inferred the expected total from the largest sequence number received. The receiver did not observe the sender's QEND marker; consequently, the end of each stream was not included in its expected count. Reconciled against sender totals, high loss is 3,280/10,986 (29.856%) and bulk loss is 4,923/8,815 (55.848%). Throughput and delay summarize the packets that reached the receiver. This is a separate heavier-load baseline stress point, not a replacement for the matched-load baseline average.\n\nBaseline run 5 used the updated receiver. Both classes report `end_marker_received: true`; high received 10,987/10,987 packets and bulk received 8,767/8,767. The switch flow dump showed normal `output` actions for both UDP ports. Received throughput totaled about 4.31 Mbps, below the configured 5 Mbps link cap, and reported loss was 0%. This is a valid no-policy run, but bulk packet count is above the confirmed matched-load range, so keep it separate from the average. See `results/baseline5.csv`.
+Sender summaries reported 10,986 high packets and 8,815 bulk packets sent. The receiver counted 7,706 high and 3,892 bulk unique packets, but its CSV said 0% loss because it had inferred the expected total from the largest sequence number received. The receiver did not observe the sender's QEND marker; consequently, the end of each stream was not included in its expected count. Reconciled against sender totals, high loss is 3,280/10,986 (29.856%) and bulk loss is 4,923/8,815 (55.848%). Throughput and delay summarize the packets that reached the receiver. This is a separate heavier-load baseline stress point, not a replacement for the matched-load baseline average.
+
+Baseline run 5 used the updated receiver. Both classes report `end_marker_received: true`; high received 10,987/10,987 packets and bulk received 8,767/8,767. The switch flow dump showed normal `output` actions for both UDP ports. Received throughput totaled about 4.31 Mbps, below the configured 5 Mbps link cap, and reported loss was 0%. This is a valid no-policy run, but bulk packet count is above the confirmed matched-load range, so keep it separate from the average. See `results/baseline5.csv`.
 
 The receiver code now reports `end_marker_received` and leaves loss fields null if the sender's end marker is missing. Pull the latest code before the next run.
 
