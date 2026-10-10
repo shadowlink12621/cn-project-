@@ -98,7 +98,7 @@ Before each teammate begins editing, pull the latest main branch. For independen
 
 ## 6. Exact next step
 
-The earlier POX learning-switch smoke test is complete. The next milestone is to pull the new project code and see whether the custom controller starts and connects.
+The custom controller has now started, the switch connected, queue setup completed, and pingall passed. The next milestone is to run the adaptive UDP traffic and confirm policy activation and receiver measurements.
 
 1. Keep the existing POX process only if it is still needed for reference. Stop it with Ctrl+C before starting another controller on port 6633.
 2. In controller terminal 1:
@@ -195,3 +195,11 @@ When the implementation and measurements are real, prepare slides covering:
 8. Live demonstration commands and a backup screenshot/video capture.
 
 Every team member should be able to explain why UDP needs application-level sequence numbers for measuring loss, why congestion must be controlled/repeatable, and why the controller chooses queues while the switch enforces them.
+
+
+### 2026-10-10 — Custom controller and topology integration passed
+
+- **Action:** Pulled the project files, launched the custom qos_controller component, started the three-host topology, configured the 5 Mbps receiver-facing queue, and ran pingall.
+- **Observed:** Controller loaded and reported switch 1 connected. The topology script reported queue 1 as high and queue 2 as bulk. Pingall reported 0% dropped (6/6 received).
+- **Status:** Controller startup, switch connection, topology creation, queue setup command, and basic reachability are verified. UDP traffic, congestion detection, queue action, and measurements remain unverified.
+- **Next:** Run the adaptive traffic commands at the Mininet prompt, then record controller policy logs and receiver CSV output.
