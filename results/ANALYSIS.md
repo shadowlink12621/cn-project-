@@ -1,6 +1,6 @@
 # QoS experiment results
 
-**Status:** two confirmed baseline runs and three adaptive runs are recorded. A run saved as `baseline3.csv` was mistakenly labeled baseline; the supplied OpenFlow dump shows QoS queue actions, so it is excluded from baseline calculations. Adaptive run 1 is the closest load match; runs 2 and 3 represent different actual bulk loads. All findings remain preliminary.
+**Status:** two confirmed matched-load baseline runs and three adaptive runs are recorded. The run saved as `baseline3.csv` was actually QoS-active and is excluded from baseline averages. A fourth, genuine no-policy baseline stress run is recorded separately; its receiver missed sender end markers, so loss was reconciled from sender totals and it is not averaged with the matched-load runs. All findings remain preliminary.
 
 **Topology:** Mininet h1/h2 -> OpenFlow switch s1 -> h3; receiver-facing egress configured at 5 Mbps.  
 **Traffic settings:** high UDP destination port 5001, requested 1.5 Mbps with 512-byte payload; bulk UDP destination port 5002, requested 8 Mbps with 1200-byte payload; each sender ran for 30 seconds.  
@@ -16,6 +16,8 @@
 | 2 | Baseline | Bulk | 1.9078 Mbps | 0% | 302.6436 ms | 534.4170 ms | 5,962 |
 | 3 | Baseline | High | 1.4785 Mbps | 0% | 287.5054 ms | 508.3606 ms | 10,829 |
 | 3 | Baseline | Bulk | 2.0378 Mbps | 0% | 287.9129 ms | 497.5662 ms | 6,368 |
+| 4 | Baseline stress | High | 1.0521 Mbps | 29.856%* | 159.2145 ms | 314.8757 ms | 10,986 |
+| 4 | Baseline stress | Bulk | 1.2454 Mbps | 55.848%* | 228.3658 ms | 326.4109 ms | 8,815 |
 | 1 | Adaptive | High | 1.4997 Mbps | 0% | 49.7486 ms | 253.0573 ms | 10,984 |
 | 1 | Adaptive | Bulk | 1.9136 Mbps | 0% | 353.3140 ms | 688.0855 ms | 5,980 |
 | 2 | Adaptive | High | 1.4726 Mbps | 1.829% | 209.8677 ms | 1,024.1037 ms | 10,987 |
@@ -23,7 +25,7 @@
 | 3 | Adaptive | High | 1.5001 Mbps | 0% | 144.5412 ms | 422.8083 ms | 10,987 |
 | 3 | Adaptive | Bulk | 1.6090 Mbps | 0% | 578.8457 ms | 2,452.5831 ms | 5,028 |
 
-## Load-matched preliminary comparison
+*Run 4 loss is reconciled from sender totals minus unique packets received because the receiver missed the QEND end marker; see `results/baseline4_reconciled.csv`. The receiver's own 0% loss figure for this run is invalid. This higher bulk-load run is not part of the matched-load average.\n\n## Load-matched preliminary comparison
 
 Baseline average over the two confirmed baseline runs versus adaptive run 1 (adaptive run 1 sender counts were 10,984 high / 5,980 bulk, within the confirmed baseline ranges 10,714–10,986 / 5,962–6,192):
 
@@ -37,6 +39,14 @@ Baseline average over the two confirmed baseline runs versus adaptive run 1 (ada
 | Bulk | p95 delay | 521.8725 ms | 688.0855 ms | +31.8% |
 
 Both confirmed baseline runs and adaptive run 1 reported 0% packet loss. This matched-load subset is consistent with the intended latency tradeoff: the high class had lower delay while the bulk class had higher delay. There is one adaptive trial in this load range, so describe it as preliminary evidence rather than a proven general result.
+
+## Baseline stress run 4 and receiver end-marker issue
+
+The flow dump during baseline run 4 showed normal forwarding for both classes: UDP 5001 and UDP 5002 each had `actions=output:"s1-eth3"`, with no `enqueue` action. This verifies the no-QoS baseline mode.
+
+Sender summaries reported 10,986 high packets and 8,815 bulk packets sent. The receiver counted 7,706 high and 3,892 bulk unique packets, but its CSV said 0% loss because it had inferred the expected total from the largest sequence number received. The receiver did not observe the sender's QEND marker; consequently, the end of each stream was not included in its expected count. Reconciled against sender totals, high loss is 3,280/10,986 (29.856%) and bulk loss is 4,923/8,815 (55.848%). Throughput and delay summarize the packets that reached the receiver. This is a separate heavier-load baseline stress point, not a replacement for the matched-load baseline average.
+
+The receiver code now reports `end_marker_received` and leaves loss fields null if the sender's end marker is missing. Pull the latest code before the next run.
 
 ## Switch queue-action verification
 
