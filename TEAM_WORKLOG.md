@@ -222,3 +222,11 @@ Every team member should be able to explain why UDP needs application-level sequ
 - **Interpretation:** policy activation is verified. These measurements alone do not establish improvement over baseline or prove queue selection. Aggregate received throughput was about 3.41 Mbps; bulk sender's requested rate was 8 Mbps, but only 5,980 packets were sent during the 30-second run, so repeatability and actual offered load should be checked against the baseline.
 - **Outstanding error:** repeated POX PacketIn exceptions while parsing ICMP Destination Unreachable remain in the supplied controller output. No evidence yet that they stopped the UDP flow, but they clutter controller logs and should be understood before the final demo.
 - **Next:** use the corrected Mininet command style in `docs/SETUP_AND_EXPERIMENT.md`, run a baseline using the standard POX learning switch at identical settings, and compare actual sender packet counts as well as receiver metrics. Preserve both CSVs and controller logs. Do not use the earlier diagnostic run as the baseline.
+
+
+### 2026-10-10 — Baseline POX port conflict cleared
+
+- **Symptom:** starting `forwarding.l2_learning` reported `Error 98 ... 6633: Address already in use`.
+- **Diagnosis:** `sudo ss -ltnp 'sport = :6633'` identified PID 5551; `ps` confirmed it was the old `python3 /home/link/pox/pox.py qos_controller` process.
+- **Action/result:** sent SIGINT to PID 5551. The immediate socket listing still showed it, but a subsequent `./pox.py forwarding.l2_learning` started without another bind error. Confirm that the switch connects when Mininet starts.
+- **Next:** keep this baseline POX process running, start a fresh topology from a second terminal, then run the documented baseline measurement with the receiver-first and 2-second wait sequence.
