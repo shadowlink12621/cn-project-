@@ -75,3 +75,8 @@ Adaptive run 3's bulk sender sent 5,028 packets, below the confirmed matched-loa
 - Adaptive receiver outputs: [adaptive.csv](adaptive.csv), [adaptive2.csv](adaptive2.csv), [adaptive3.csv](adaptive3.csv).
 - Sender totals: confirmed matched-load baseline high 10,986/10,714 and bulk 6,192/5,962; baseline stress run 4 high 10,986 and bulk 8,815; extra baseline run 5 high 10,987 and bulk 8,767; Adaptive runs high 10,984/10,987/10,987 and bulk 5,980/14,864/5,028.
 - Command sequence and VM setup: [../docs/SETUP_AND_EXPERIMENT.md](../docs/SETUP_AND_EXPERIMENT.md).
+
+
+## Closeout status — 15 October 2026
+
+The implementation, prior policy activation, and queue 1/2 flow actions have been demonstrated. Baseline5 confirms the receiver end-marker fix and standard no-policy forwarding. The remaining course-project closeout is one carefully captured adaptive run with the same configured traffic rates, controller ACTIVE evidence, queue actions captured while packets are flowing, both valid receiver end markers, and both sender summaries. Compare actual packet counts before calling it matched-load. If actual offered packet counts differ materially, retain it as a separate load point and keep the conclusion preliminary. Then have all three team members review the written claims and rehearse the demo. The current data do not support a statistical/general guarantee because only one adaptive run is in the matched-load range.
