@@ -249,4 +249,7 @@ POX 0.7 may warn that Python 3.12 is outside its documented support range. The p
 
 **Built by Team 14 · Section K · Computer Networks**
 
+> [!IMPORTANT]
+> **Current closeout step (15 Oct 2026):** run one final adaptive trial with `qos_controller`, save controller/flow/receiver/sender evidence, review the analysis as a team, and rehearse the demo. Implementation and queue behavior have already been observed; the final comparison remains preliminary until another correctly captured adaptive run is added. PPT work is on hold pending Sridatta's end-of-project confirmation.
+
 </div>
