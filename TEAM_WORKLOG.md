@@ -392,3 +392,21 @@ The high UDP flow should show `enqueue:"s1-eth3":1`; bulk should show `enqueue:"
 
 Only count this as a complete adaptive measurement if the receiver output has `end_marker_received: true` for both classes, sender totals are captured, and controller/flow evidence corresponds to this run. If not, record the run as incomplete and preserve the error/output for troubleshooting.
 
+
+
+### 2026-10-15 — Today’s finish plan and honest remaining work
+
+**Current state:** implementation and basic reachability are in place; the controller has previously activated, and the switch has previously shown queue 1/2 enqueue actions. Two matched-load baseline runs and one matched-load adaptive run are documented. Baseline5 validates the updated receiver and normal no-policy forwarding, but its bulk packet count (8,767) is higher than the earlier matched-load baseline range. The project is therefore demoable, but the final comparison/report is still preliminary.
+
+**To finish the technical evidence today (minimum viable closeout):**
+
+1. **Samarth (VM operator):** perform one adaptive4 run using the exact commands in this file. Capture controller output from switch connection through ACTIVE, a flow dump during active traffic, receiver CSV, and both sender summaries. Require both end markers to be true; keep actual sender counts.
+2. **Sridatta (integration):** send/save those outputs in the repository, check that high/bulk counts and receiver markers line up, update `results/ANALYSIS.md`, then commit the results. If the adaptive4 actual bulk packet count is materially different from baseline5, report the run as another load point and do not claim a matched-load comparison.
+3. **Neha (review):** read README and results analysis, check all claims against recorded evidence, add a short live-demo checklist/limitations note if anything is missing, and commit documentation separately.
+4. **Everyone:** do a 10-minute rehearsal. One person starts POX; one starts Mininet and traffic; one explains classification, thresholds, queues, and the observed numbers. All three should be able to answer what the result demonstrates and its limitations.
+
+**Closeout decision:** If adaptive4 has policy ACTIVE, correct queue actions, both end markers, and complete sender/receiver evidence, the implementation demonstration is complete for a course project. The report should still describe statistics as preliminary because there is only one adaptive trial in the matched-load range. For stronger evidence, repeat adaptive at least twice more and match actual offered packet counts. Do not fabricate or smooth results.
+
+**PPT status:** explicitly on hold until the project work is complete and Sridatta confirms the deck should be created/updated. This instruction remains in force even if today's code and measurement work is complete.
+
+**If any command fails:** preserve the full terminal output, mark the run incomplete, and assign the specific fix to the VM operator before changing code or thresholds.
