@@ -4,7 +4,7 @@
 **Course / section:** Computer Networks, Section K  
 **Repository:** https://github.com/shadowlink12621/cn-project-  
 **Working branch:** main  
-**Last updated:** 2026-10-10
+**Last updated:** 2026-10-16
 
 This is the team's shared reference for the project goal, what each person needs to do, how to work in GitHub, what has been tried, and the next action. Add a dated note here after each meaningful setup, implementation, experiment, or presentation milestone. Keep errors and the fix that worked so the next teammate does not repeat the same debugging.
 
@@ -410,3 +410,13 @@ Only count this as a complete adaptive measurement if the receiver output has `e
 **PPT status:** explicitly on hold until the project work is complete and Sridatta confirms the deck should be created/updated. This instruction remains in force even if today's code and measurement work is complete.
 
 **If any command fails:** preserve the full terminal output, mark the run incomplete, and assign the specific fix to the VM operator before changing code or thresholds.
+
+
+### 2026-10-16 — Adaptive4 queue policy verified; receiver completion failed
+
+- **Queue evidence:** while traffic was active, UDP 5001 had `actions=enqueue:"s1-eth3":1` and UDP 5002 had `actions=enqueue:"s1-eth3":2`.
+- **Controller evidence:** supplied POX log showed policy ACTIVE at 86.4% utilization and INACTIVE at 31.5%. Threshold detection and queue selection worked in this trial.
+- **Receiver:** ran for 35 seconds (senders ran 30 seconds), but both `end_marker_received` fields were false. High received 7,494; bulk received 2,972. Expected count and packet loss are unknown and remain blank.
+- **Sender totals:** high sent 10,986; bulk sent 23,737. The bulk count is much higher than baseline5's 8,767, so this is not a load-matched comparison. Receiver output is preserved in `results/adaptive4.csv`; treat it as an incomplete high-load stress measurement.
+- **POX log error:** attached traceback repeatedly reports `AttributeError: type object 'ipv4' has no attribute 'ipv4'` while parsing ICMP Destination Unreachable packets. Controller port-statistics/policy logs continued, and the UDP flow dump still showed correct queue actions. Keep this as a known POX ICMP parser issue; do not conflate it with direct evidence of queue selection.
+- **Next:** repeat a baseline/adaptive pair with identical high 1.5 Mbps and bulk 3.0 Mbps settings to target a load near baseline5. Set receiver `--seconds 90` while keeping sender duration 30 seconds and `--measure-seconds 30`, allowing queued packets/end markers more time to drain. Require both markers true. Capture controller ACTIVE and flow dump during the QoS run. Compare actual sender totals and label results preliminary if loads still differ.
