@@ -120,3 +120,12 @@ For the next adaptive trial, use unique `adaptive4` paths and keep the same traf
     sh ovs-ofctl -O OpenFlow10 dump-flows s1
 
 Retain evidence that the policy became ACTIVE, port 5001 used enqueue queue 1, and port 5002 used enqueue queue 2. Retrieve receiver and sender logs with the `py print(hN.cmd(...))` pattern. A usable result requires both receiver end markers to be true and the sender totals to be saved.
+
+
+## 8. Retest after adaptive4 missed both end markers
+
+The previous adaptive4 trial verified the controller and queue mapping, but the receiver stopped before it got either sender's QEND marker. Its loss is unknown. The bulk sender produced 23,737 packets, far more than baseline5's 8,767, so do not compare adaptive4 directly with baseline5.
+
+For a load-matched pair, repeat **both baseline and adaptive** with identical rates: high 1.5 Mbps and bulk 3.0 Mbps. Set receiver `--seconds 90 --measure-seconds 30`; keep senders at 30 seconds. The extra receiver time allows queued packets and repeated end markers to drain. Use unique files such as `baseline6.csv`, `high-baseline6.log`, `bulk-baseline6.log`, then `adaptive5.csv`, `high-adaptive5.log`, and `bulk-adaptive5.log`.
+
+For the baseline, run only `forwarding.l2_learning`; verify the active UDP flows have normal `output:"s1-eth3"` actions. For the adaptive condition, run `qos_controller`; save its ACTIVE line and verify UDP 5001 uses queue 1 and UDP 5002 uses queue 2 while senders are active. In each condition, record sender totals and require both receiver rows to show `end_marker_received: true`. Compare actual packet counts before describing the pair as load matched. If a QEND marker is still missing, keep loss unknown and extend receiver time or repeat; do not infer loss from receiver counts alone.
