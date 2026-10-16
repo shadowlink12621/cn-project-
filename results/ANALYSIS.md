@@ -77,6 +77,14 @@ Adaptive run 3's bulk sender sent 5,028 packets, below the confirmed matched-loa
 - Command sequence and VM setup: [../docs/SETUP_AND_EXPERIMENT.md](../docs/SETUP_AND_EXPERIMENT.md).
 
 
-## Closeout status — 15 October 2026
+## Adaptive run 4 — queue behavior verified, measurement incomplete
 
-The implementation, prior policy activation, and queue 1/2 flow actions have been demonstrated. Baseline5 confirms the receiver end-marker fix and standard no-policy forwarding. The remaining course-project closeout is one carefully captured adaptive run with the same configured traffic rates, controller ACTIVE evidence, queue actions captured while packets are flowing, both valid receiver end markers, and both sender summaries. Compare actual packet counts before calling it matched-load. If actual offered packet counts differ materially, retain it as a separate load point and keep the conclusion preliminary. Then have all three team members review the written claims and rehearse the demo. The current data do not support a statistical/general guarantee because only one adaptive run is in the matched-load range.
+The controller log for this run showed policy activation at 86.4% utilization and deactivation at 31.5%. The live OpenFlow dump showed UDP destination port 5001 using `enqueue:"s1-eth3":1` and port 5002 using `enqueue:"s1-eth3":2`. This confirms dynamic policy activation and intended queue selection during traffic.
+
+The receiver ran for 35 seconds while senders ran for 30 seconds, but neither flow's QEND marker arrived. Receiver counts were high 7,494 and bulk 2,972; the sender summaries reported high 10,986 and bulk 23,737. Therefore expected receiver counts and packet loss are unknown; do not compute loss from these values as if all sent packets were accounted for. The received throughput and delays are preserved in [adaptive4.csv](adaptive4.csv), but this run is a high-load stress/incomplete measurement, not a matched-load comparison. The requested bulk rate was 8 Mbps and actual sender packet count was about 2.7 times baseline5's 8,767 packets.
+
+The attached POX traceback is an ICMP Destination Unreachable parser exception in POX's `icmp.py` (`ipv4.ipv4` attribute lookup). It is a POX compatibility/packet-parsing issue. The controller continued processing port statistics and emitted ACTIVE/INACTIVE transitions, and the observed UDP flow entries still used the correct queues. Record it as a known controller log error; it does not invalidate the direct flow-table evidence.
+
+## Next validation
+
+Repeat a controlled baseline/adaptive pair using identical traffic settings. To target baseline5's actual bulk load more closely, use high 1.5 Mbps and bulk 3.0 Mbps for both conditions (rather than requesting 8 Mbps). Run the receiver for 90 seconds so the end markers have time to arrive after the 30-second sender period; keep `--measure-seconds 30`. Check that both markers are true and save both sender summaries. Capture the QoS flow dump while traffic is active and keep the controller ACTIVE lines. Compare actual sender counts; if they still differ substantially, label results as separate load points. Conclusions remain preliminary until there are repeated adaptive trials at comparable loads.
