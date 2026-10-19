@@ -1,0 +1,3 @@
+class,end_marker_received,expected_packets,received_packets,lost_packets,loss_percent,throughput_mbps,mean_delay_ms,p95_delay_ms
+high,true,9408,9408,0,0.0,1.2845,248.1234,649.7309
+bulk,true,7287,7287,0,0.0,2.3318,241.2009,584.3539
