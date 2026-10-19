@@ -430,3 +430,14 @@ Only count this as a complete adaptive measurement if the receiver output has `e
 - **Adaptive flow dump:** captured high UDP port 5001 with `enqueue:"s1-eth3":1`; no bulk UDP row appeared in that specific capture. Adaptive4 had previously captured both queue actions, so queue 1/2 behavior is demonstrated across runs; if repeating, take another dump after several seconds of traffic to capture the bulk row in the same trial.
 - **Interpretation:** bulk sender counts are close (7,287 vs 7,703); high sender counts differ by about 16.8%. The pair has valid loss counts but is not tightly load matched. Results are suggestive of the prioritization tradeoff, not proof of a general performance guarantee. Receiver CSVs are saved as `results/baseline6.csv` and `results/adaptive5.csv`; analysis is in `results/ANALYSIS.md`.
 - **Next:** all core implementation and measurement elements have been demonstrated. Remaining student work is a team review/rehearsal and, if time allows, another baseline trial to reduce the high-flow count mismatch and a second active-flow dump showing both queue entries. PPT remains on hold until Sridatta confirms.
+
+
+### 2026-10-19 — Adaptive6 completed the same-run queue and receiver checks
+
+- **Reachability:** pingall passed with 0% dropped.
+- **Controller:** QoS controller connected and logged ACTIVE at 79.6% utilization, later INACTIVE at 31.5%.
+- **Same-run flow verification:** first active dump showed UDP 5001 `enqueue:"s1-eth3":1` and UDP 5002 `enqueue:"s1-eth3":2`. A later dump showed increasing counters for both queue rules.
+- **Receiver:** with a 90-second receive window, both end markers arrived. High sent/received 10,983/10,983, loss 0%, throughput 1.4995 Mbps, mean delay 5.8537 ms, p95 31.9962 ms. Bulk sent/received 8,267/8,267, loss 0%, throughput 2.6454 Mbps, mean delay 235.7977 ms, p95 505.4946 ms.
+- **Files:** `results/adaptive6.csv` saved; `results/ANALYSIS.md` updated.
+- **Interpretation:** functional demonstration is complete: controller activation, both per-class queue actions in one run, and valid receiver measurements are verified. Compared with baseline6, sender counts differ by 16.8% high and 13.4% bulk, so performance conclusions remain preliminary. Another baseline at the same rates is optional strengthening, not a blocker for the demo. Team review/rehearsal remains.
+- **PPT:** remains on hold until Sridatta explicitly confirms to create/update it.
