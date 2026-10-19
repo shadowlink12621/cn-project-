@@ -250,6 +250,6 @@ POX 0.7 may warn that Python 3.12 is outside its documented support range. The p
 **Built by Team 14 · Section K · Computer Networks**
 
 > [!IMPORTANT]
-> **Current closeout step (19 Oct 2026):** baseline6 and adaptive5 are recorded with valid end markers. QoS activation was observed; adaptive5 captured the high-flow queue action, and adaptive4 previously captured both queue actions. Sender counts differ, especially for high traffic, so the comparison remains preliminary. Review the analysis and rehearse the demo as a team. PPT work is on hold pending Sridatta's end-of-project confirmation.
+> **Current status (19 Oct 2026):** adaptive6 verified controller activation, both queue actions in the same live flow dump, and valid receiver end markers. The analysis and CSV are saved. Performance comparisons remain preliminary because baseline/adaptive sender counts differ. Review the results and rehearse the demo as a team; an additional baseline run is optional. PPT work is on hold pending Sridatta's confirmation.
 
 </div>
