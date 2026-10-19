@@ -1,6 +1,6 @@
 # QoS experiment results
 
-**Status:** two confirmed matched-load baseline runs, three earlier adaptive runs, and a new baseline6/adaptive5 pair are recorded. The new pair has valid end markers but a 16.8% high-flow sender-count mismatch, so it is a useful near-load comparison, not a tightly matched trial. The run saved as `baseline3.csv` was actually QoS-active and is excluded from baseline averages. Two additional no-policy baseline runs are recorded separately from the matched-load averages: run 4 missed sender end markers and has sender-count-reconciled loss; run 5 received both end markers and reported no loss, but its actual bulk load differs from the matched runs. All findings remain preliminary.
+**Status:** two confirmed matched-load baseline runs, three earlier adaptive runs, the baseline6/adaptive5 pair, and an adaptive6 run with both queue actions captured are recorded. The new pair has valid end markers but a 16.8% high-flow sender-count mismatch, so it is a useful near-load comparison, not a tightly matched trial. The run saved as `baseline3.csv` was actually QoS-active and is excluded from baseline averages. Two additional no-policy baseline runs are recorded separately from the matched-load averages: run 4 missed sender end markers and has sender-count-reconciled loss; run 5 received both end markers and reported no loss, but its actual bulk load differs from the matched runs. All findings remain preliminary.
 
 **Topology:** Mininet h1/h2 -> OpenFlow switch s1 -> h3; receiver-facing egress configured at 5 Mbps.  
 **Traffic settings:** high UDP destination port 5001, requested 1.5 Mbps with 512-byte payload; bulk UDP destination port 5002, requested 8 Mbps with 1200-byte payload; each sender ran for 30 seconds.  
@@ -72,7 +72,7 @@ Adaptive run 3's bulk sender sent 5,028 packets, below the confirmed matched-loa
 ## Raw files and reproduction
 
 - Confirmed matched-load baseline outputs: [baseline.csv](baseline.csv), [baseline2.csv](baseline2.csv). [baseline3.csv](baseline3.csv) is excluded because its matching flow dump showed QoS queue actions. [baseline4_reconciled.csv](baseline4_reconciled.csv) records the no-QoS run with loss reconciled from sender/receiver totals; [baseline5.csv](baseline5.csv) records the extra verified baseline with end markers received.
-- Adaptive receiver outputs: [adaptive.csv](adaptive.csv), [adaptive2.csv](adaptive2.csv), [adaptive3.csv](adaptive3.csv), [adaptive4.csv](adaptive4.csv), [adaptive5.csv](adaptive5.csv).
+- Adaptive receiver outputs: [adaptive.csv](adaptive.csv), [adaptive2.csv](adaptive2.csv), [adaptive3.csv](adaptive3.csv), [adaptive4.csv](adaptive4.csv), [adaptive5.csv](adaptive5.csv), [adaptive6.csv](adaptive6.csv).
 - Sender totals: confirmed matched-load baseline high 10,986/10,714 and bulk 6,192/5,962; baseline stress run 4 high 10,986 and bulk 8,815; extra baseline run 5 high 10,987 and bulk 8,767; baseline6 high 9,408 and bulk 7,287; earlier adaptive runs high 10,984/10,987/10,987 and bulk 5,980/14,864/5,028; adaptive4 high 10,986 and bulk 23,737; adaptive5 high 10,987 and bulk 7,703.
 - Command sequence and VM setup: [../docs/SETUP_AND_EXPERIMENT.md](../docs/SETUP_AND_EXPERIMENT.md).
 
@@ -104,3 +104,12 @@ Both runs used 1.5 Mbps high and 3 Mbps bulk senders for 30 seconds, with the re
 The bulk sender totals are close (5.7% difference), while the high sender totals differ by 16.8%; therefore the pair is not tightly load matched. The observed numbers are consistent with the intended latency tradeoff, but this is one run per condition and load differs. Present as a demonstration, not a causal or statistical claim.
 
 The adaptive5 controller logged ACTIVE at 79.5% and 96.8% utilization, with INACTIVE at 33.1% and 0.0%. Its pasted live flow dump captured high UDP port 5001 using queue 1, but did not show the bulk flow entry; adaptive4 previously showed both queue actions. Capture another flow dump after a few seconds of active traffic in any repeat to verify both queues in that run. The receiver and sender CSVs are preserved as [baseline6.csv](baseline6.csv) and [adaptive5.csv](adaptive5.csv).
+
+
+## Adaptive6 — both queues confirmed in one run — 19 October 2026
+
+The controller connected to the switch and logged ACTIVE at 79.6% utilization, followed by INACTIVE at 31.5%. `pingall` passed. The first live flow dump showed high UDP port 5001 using queue 1 and bulk UDP port 5002 using queue 2; a later dump showed both rules with increasing packet counters. This completes the same-run queue-selection verification.
+
+The 90-second receiver got both end markers. High sent/received 10,983/10,983, loss 0%, throughput 1.4995 Mbps, mean delay 5.8537 ms, p95 31.9962 ms. Bulk sent 8,267, received 8,267, loss 0%, throughput 2.6454 Mbps, mean delay 235.7977 ms, p95 505.4946 ms. Raw receiver results are in [adaptive6.csv](adaptive6.csv).
+
+Compared with baseline6, adaptive6's high sender count is 16.8% higher and bulk sender count is 13.4% higher. Its observed high delay is much lower, while bulk delay is similar; the differing loads and one trial per condition prevent attributing those changes solely to QoS. Present this as a successful functional demonstration with preliminary performance evidence. Another baseline trial at these same rates would strengthen the numerical comparison, but the controller, both queue actions, and valid receiver measurements have now all been demonstrated.
