@@ -239,8 +239,8 @@ POX 0.7 may warn that Python 3.12 is outside its documented support range. The p
 - [x] SDN congestion controller and queue actions observed
 - [x] OVS flow table verified queue 1 / queue 2 mapping
 - [x] Re-run baseline with end-marker validation and verify normal output actions
-- [ ] Repeat the run with qos_controller; compare after checking actual packet counts
-- [ ] Update final analysis from only correctly labeled runs
+- [x] Run QoS with valid end markers and compare actual sender counts (comparison remains preliminary due to load mismatch)
+- [x] Update the analysis with correctly labeled runs and measurement caveats
 - [ ] Present and demonstrate the final results
 
 ---
@@ -250,6 +250,6 @@ POX 0.7 may warn that Python 3.12 is outside its documented support range. The p
 **Built by Team 14 · Section K · Computer Networks**
 
 > [!IMPORTANT]
-> **Current closeout step (15 Oct 2026):** run one final adaptive trial with `qos_controller`, save controller/flow/receiver/sender evidence, review the analysis as a team, and rehearse the demo. Implementation and queue behavior have already been observed; the final comparison remains preliminary until another correctly captured adaptive run is added. PPT work is on hold pending Sridatta's end-of-project confirmation.
+> **Current closeout step (19 Oct 2026):** baseline6 and adaptive5 are recorded with valid end markers. QoS activation was observed; adaptive5 captured the high-flow queue action, and adaptive4 previously captured both queue actions. Sender counts differ, especially for high traffic, so the comparison remains preliminary. Review the analysis and rehearse the demo as a team. PPT work is on hold pending Sridatta's end-of-project confirmation.
 
 </div>
