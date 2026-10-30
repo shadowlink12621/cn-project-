@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
 """Start the Team 14 three-host Mininet topology and configure egress queues."""
 
+import shlex
 import subprocess
+from pathlib import Path
 
 from mininet.cli import CLI
 from mininet.net import Mininet
 from mininet.node import OVSSwitch, RemoteController
 from mininet.topo import Topo
+
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 
 class QoSTopology(Topo):
@@ -83,6 +88,9 @@ def main():
     )
     try:
         network.start()
+        project_root = shlex.quote(str(PROJECT_ROOT))
+        for host in network.hosts:
+            host.cmd(f"cd {project_root}")
         configure_receiver_queues()
         print("Hosts: h1=10.0.0.1 (high), h2=10.0.0.2 (bulk), h3=10.0.0.3 (receiver)")
         print("The OpenFlow controller must already be running on 127.0.0.1:6633.")
