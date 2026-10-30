@@ -454,3 +454,10 @@ Only count this as a complete adaptive measurement if the receiver output has `e
 - **Results interpretation:** the three baseline and three QoS cap2 CSVs have valid end markers but actual sender counts differ. The averages are descriptive, not a controlled performance comparison. Queue minimum-rate settings are not proof of guaranteed delivered bandwidth.
 - **Presentation outline:** problem and goal; topology and two UDP classes; POX/OpenFlow control; live traffic and flow evidence; measured results with caveats; limitations and conclusion. Keep the talk conversational and show only evidence that is actually captured.
 - **PPT:** still not to be generated or revised until Sridatta explicitly confirms.
+
+
+### 2026-10-30 — Portable VM paths
+
+- Updated the README and setup runbook to use a consistent fresh-clone folder, `$HOME/cn-project-qos`, and project-relative commands instead of a specific account or nested checkout path.
+- Updated `src/mininet_topology.py` to find the repository root from its own file location and set each Mininet host shell to that directory before opening the CLI. Traffic commands can now use `src/traffic.py` and `results/...` after pulling the latest code.
+- Python syntax parsing passed, and the updated README/runbook no longer contain the old `/home/link` or double-nested path. A live smoke check on the team's Ubuntu VM is still needed; after pulling, check `py print(h3.cmd('pwd'))`, `py print(h3.cmd('test -f src/traffic.py && echo FOUND'))`, then run `pingall`.
