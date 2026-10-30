@@ -1,6 +1,6 @@
 # VM setup and experiment runbook
 
-This guide assumes the team's Ubuntu VM has Mininet 2.3.0, Open vSwitch 3.3.9, and POX checked out at the home-directory path ~/pox. The topology constrains the receiver-facing Open vSwitch port to 5 Mbps and creates two HTB queues. The controller measures that port and selects queues for the two UDP destination ports after utilization crosses the configured threshold.
+This guide assumes the team's Ubuntu VM has Mininet 2.3.0, Open vSwitch 3.3.9, and POX checked out at the home-directory path ~/pox. The current checked-in topology constrains the receiver-facing Open vSwitch port to 2 Mbps and creates two HTB queues. Older CSVs include 5 Mbps experiments; keep those results separate from the current 2 Mbps trials. The controller measures that port and selects queues for the two UDP destination ports after utilization crosses the configured threshold.
 
 ## 1. Pull the project files
 
@@ -34,10 +34,10 @@ The command opens the Mininet CLI. It connects the switch to the controller and 
 
 | Queue | UDP destination port | Meaning | Minimum rate | Maximum rate |
 |---|---:|---|---:|---:|
-| 1 | 5001 | High-priority real-time-like flow | 1.5 Mbps | 5 Mbps |
-| 2 | 5002 | Low-priority bulk flow | 0.5 Mbps | 5 Mbps |
+| 1 | 5001 | High-priority real-time-like flow | 1.5 Mbps | 2 Mbps |
+| 2 | 5002 | Low-priority bulk flow | 0.5 Mbps | 2 Mbps |
 
-The port capacity is 5 Mbps. Queue minimum rates are lower than the port capacity so both classes have room; these settings are experiment controls, not proof of a bandwidth guarantee.
+The current port capacity is 2 Mbps. Queue minimum rates are configuration values and have not been proven as hard guarantees by these measurements. Queue minimum rates are lower than the port capacity so both classes have room; these settings are experiment controls, not proof of a bandwidth guarantee.
 
 ## 4. Run the baseline
 
@@ -129,3 +129,41 @@ The previous adaptive4 trial verified the controller and queue mapping, but the 
 For a load-matched pair, repeat **both baseline and adaptive** with identical rates: high 1.5 Mbps and bulk 3.0 Mbps. Set receiver `--seconds 90 --measure-seconds 30`; keep senders at 30 seconds. The extra receiver time allows queued packets and repeated end markers to drain. Use unique files such as `baseline6.csv`, `high-baseline6.log`, `bulk-baseline6.log`, then `adaptive5.csv`, `high-adaptive5.log`, and `bulk-adaptive5.log`.
 
 For the baseline, run only `forwarding.l2_learning`; verify the active UDP flows have normal `output:"s1-eth3"` actions. For the adaptive condition, run `qos_controller`; save its ACTIVE line and verify UDP 5001 uses queue 1 and UDP 5002 uses queue 2 while senders are active. In each condition, record sender totals and require both receiver rows to show `end_marker_received: true`. Compare actual packet counts before describing the pair as load matched. If a QEND marker is still missing, keep loss unknown and extend receiver time or repeat; do not infer loss from receiver counts alone.
+
+
+## 9. Final 2 Mbps demo and what to say
+
+The commands below match the current project version and the VM path used by this team. If your Linux username or checkout path differs, replace **/home/link/cn-project-/cn-project-** with the correct path.
+
+**Terminal 1 — custom POX controller:**
+
+    cd ~/cn-project-/cn-project-
+    PYTHONPATH="$PWD/src" python3 ~/pox/pox.py qos_controller 2>&1 | tee results/demo-controller.log
+
+Wait for **QoS controller ready** and then **Switch 1 connected**.
+
+**Terminal 2 — Mininet:**
+
+    cd ~/cn-project-/cn-project-
+    sudo mn -c
+    sudo python3 src/mininet_topology.py
+
+At the **mininet>** prompt, enter one line at a time:
+
+    pingall
+    py h3.cmd("python3 /home/link/cn-project-/cn-project-/src/traffic.py receive --seconds 90 --measure-seconds 30 --csv /home/link/cn-project-/cn-project-/results/demo-qos.csv > /home/link/cn-project-/cn-project-/results/demo-qos-receiver.log 2>&1 &")
+    py __import__('time').sleep(2)
+    py h1.cmd("python3 /home/link/cn-project-/cn-project-/src/traffic.py send --traffic-class high --seconds 30 --rate-mbps 1.5 > /home/link/cn-project-/cn-project-/results/demo-high.log 2>&1 &")
+    py h2.cmd("python3 /home/link/cn-project-/cn-project-/src/traffic.py send --traffic-class bulk --seconds 30 --rate-mbps 8 > /home/link/cn-project-/cn-project-/results/demo-bulk.log 2>&1 &")
+    py __import__('time').sleep(5)
+    sh ovs-ofctl -O OpenFlow10 dump-flows s1
+
+Look for **Congestion policy ACTIVE** in Terminal 1 and these actions in the flow dump: UDP destination 5001 uses **enqueue queue 1**; UDP destination 5002 uses **enqueue queue 2**. If the dump says **output:3**, or ACTIVE never appears, that run did not verify adaptive queue selection. Save the output and explain the limitation honestly.
+
+Wait for the receiver's 90-second window, then at **mininet>** inspect:
+
+    py print(h3.cmd("cat /home/link/cn-project-/cn-project-/results/demo-qos-receiver.log; cat /home/link/cn-project-/cn-project-/results/demo-qos.csv"))
+    py print(h1.cmd("cat /home/link/cn-project-/cn-project-/results/demo-high.log"))
+    py print(h2.cmd("cat /home/link/cn-project-/cn-project-/results/demo-bulk.log"))
+
+Only use receiver loss values when **end_marker_received** is **true** for that class. The sender logs show actual packet totals; the configured request rate is not the same as the rate the VM successfully sent. Exit Mininet with **exit** and stop POX with **Ctrl+C**.
