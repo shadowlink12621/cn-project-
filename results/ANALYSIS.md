@@ -1,5 +1,37 @@
 # QoS experiment results
 
+
+## Current 2 Mbps follow-up — 30 Oct 2026
+
+The current checked-in topology configures the receiver-facing port and both queue maximum rates to 2 Mbps. Earlier 5 Mbps runs remain historical data and must not be combined with these rows.
+
+Three cap2 baseline CSVs and three cap2 QoS CSVs have valid end markers. The averages below are calculated from those CSV rows:
+
+| Condition | Class | Mean throughput | Mean delay | Mean p95 delay | Mean CSV loss |
+|---|---|---:|---:|---:|---:|
+| Baseline | High | 0.810 Mbps | 530.9 ms | 660.4 ms | 0% |
+| Baseline | Bulk | 1.062 Mbps | 551.0 ms | 693.9 ms | 0% |
+| QoS | High | 1.298 Mbps | 486.9 ms | 1,319.5 ms | 0.28% |
+| QoS | Bulk | 0.577 Mbps | 1,911.7 ms | 5,589.6 ms | 0% |
+
+These averages are descriptive only. Actual sender packet counts differ substantially between baseline and QoS trials, so this is not a tightly load-matched comparison. The measurements suggest higher received high-class throughput and lower bulk throughput under the QoS-labeled runs; high-class delay varies, and the high p95 average is higher. Do not claim a consistent latency improvement or a guaranteed bandwidth from these numbers. The configured queue minimum rates are 1.5 Mbps (high) and 0.5 Mbps (bulk), but configuration alone does not prove a guarantee.
+
+A separate stress observation, **cap2-qos-check.csv**, recorded 1.4107 Mbps high throughput and 0.6538 Mbps bulk throughput, with 0% high loss and 71.562% bulk loss. Treat it as its own stress result, not as a matched comparison to cap2 baseline.
+
+### 2 Mbps OpenFlow evidence status
+
+The saved **cap2-qos2-flows.txt** and **cap2-qos3-flows.txt** snapshots show ordinary **output:3** actions for the UDP flows. Those particular snapshots do not demonstrate queue assignment during active congestion. Capture the flow table after the controller logs **ACTIVE** and after the senders have been running for several seconds. Queue selection is demonstrated for a trial only when the live output shows UDP destination 5001 with enqueue queue 1 and UDP destination 5002 with enqueue queue 2. The earlier 5 Mbps adaptive6 run is separately documented as having captured both actions in the same run.
+
+### Current demo/review checklist
+
+1. Pull the latest source and confirm the port capacity and controller utilization reference are both 2,000,000 bit/s.
+2. Start one custom POX **qos_controller** and a fresh Mininet topology.
+3. Start the receiver before the senders. During the send window, confirm a controller **ACTIVE** message and save a live flow dump.
+4. Require both receiver end markers to be true before quoting receiver-computed loss.
+5. Present the results as preliminary and separate 2 Mbps results from the earlier 5 Mbps results.
+6. If the policy does not activate or both queue actions are not visible, report that accurately and use the earlier verified adaptive6 evidence for the queue-action explanation.
+
+
 **Status:** two confirmed matched-load baseline runs, three earlier adaptive runs, the baseline6/adaptive5 pair, and an adaptive6 run with both queue actions captured are recorded. The new pair has valid end markers but a 16.8% high-flow sender-count mismatch, so it is a useful near-load comparison, not a tightly matched trial. The run saved as `baseline3.csv` was actually QoS-active and is excluded from baseline averages. Two additional no-policy baseline runs are recorded separately from the matched-load averages: run 4 missed sender end markers and has sender-count-reconciled loss; run 5 received both end markers and reported no loss, but its actual bulk load differs from the matched runs. All findings remain preliminary.
 
 **Topology:** Mininet h1/h2 -> OpenFlow switch s1 -> h3; receiver-facing egress configured at 5 Mbps.  
