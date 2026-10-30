@@ -70,13 +70,26 @@ flowchart LR
 
 ## 🚀 Quick start
 
-> Run these commands **inside the Ubuntu VM**. Open separate terminal windows for the controller and Mininet.
+> Run these steps inside the Ubuntu VM. Open separate terminal windows for the controller and Mininet.
+
+For a fresh Ubuntu VM, install the prerequisites if needed, then clone the project and POX:
+
+```bash
+sudo apt update
+sudo apt install -y git python3 mininet openvswitch-switch
+sudo systemctl enable --now openvswitch-switch
+git clone https://github.com/noxrepo/pox.git "$HOME/pox"
+git clone https://github.com/shadowlink12621/cn-project-.git "$HOME/cn-project-qos"
+cd "$HOME/cn-project-qos"
+```
+
+If you already cloned the repository somewhere else, change into that repository's top-level folder in each terminal instead. The remaining commands use paths relative to the repository, not a particular username or folder name. The topology also sets each Mininet host's working folder to this repository automatically.
 
 <details open>
 <summary><strong>1 · Start the SDN controller</strong></summary>
 
 ```bash
-cd ~/cn-project-/cn-project-
+cd "$HOME/cn-project-qos"
 # Ensure port 6633 is free before launching the controller.
 PYTHONPATH="$PWD/src" python3 ~/pox/pox.py qos_controller
 ```
@@ -91,7 +104,7 @@ Leave this terminal open. A successful start logs **“QoS controller ready”**
 In a second VM terminal:
 
 ```bash
-cd ~/cn-project-/cn-project-
+cd "$HOME/cn-project-qos"
 sudo mn -c
 sudo python3 src/mininet_topology.py
 ```
@@ -114,15 +127,15 @@ At the `mininet>` prompt, run one command at a time. The Python prompt `py` lets
 Start the receiver and wait two seconds:
 
 ```text
-py h3.cmd("python3 /home/link/cn-project-/cn-project-/src/traffic.py receive --seconds 35 --measure-seconds 30 --csv /tmp/qos-run.csv > /tmp/qos-receiver.log 2>&1 &")
+py h3.cmd("python3 src/traffic.py receive --seconds 35 --measure-seconds 30 --csv /tmp/qos-run.csv > /tmp/qos-receiver.log 2>&1 &")
 py __import__('time').sleep(2)
 ```
 
 Start both senders:
 
 ```text
-py h1.cmd("python3 /home/link/cn-project-/cn-project-/src/traffic.py send --traffic-class high --seconds 30 --rate-mbps 1.5 >/tmp/high-run.log 2>&1 &")
-py h2.cmd("python3 /home/link/cn-project-/cn-project-/src/traffic.py send --traffic-class bulk --seconds 30 --rate-mbps 8 >/tmp/bulk-run.log 2>&1 &")
+py h1.cmd("python3 src/traffic.py send --traffic-class high --seconds 30 --rate-mbps 1.5 >/tmp/high-run.log 2>&1 &")
+py h2.cmd("python3 src/traffic.py send --traffic-class bulk --seconds 30 --rate-mbps 8 >/tmp/bulk-run.log 2>&1 &")
 ```
 
 After the run finishes, read the receiver results:
@@ -276,12 +289,12 @@ The saved 2 Mbps flow snapshots for cap2-qos2 and cap2-qos3 show normal output a
 
 ## 🖥️ Step-by-step live demo
 
-Use two Ubuntu VM terminal windows. The project path below matches the current VM account. If your VM username or folder differs, replace **/home/link/cn-project-/cn-project-** with your actual project path.
+Use two Ubuntu VM terminal windows. These commands assume the standard clone folder **$HOME/cn-project-qos** shown in Quick start. If you cloned elsewhere, open each terminal in the repository root; the Mininet hosts use that root automatically.
 
 ### Terminal 1 — start the POX QoS controller
 
 ~~~bash
-cd ~/cn-project-/cn-project-
+cd "$HOME/cn-project-qos"
 PYTHONPATH="$PWD/src" python3 ~/pox/pox.py qos_controller 2>&1 | tee results/demo-controller.log
 ~~~
 
@@ -290,7 +303,7 @@ Leave this running. Wait until you see **QoS controller ready**. When the switch
 ### Terminal 2 — start Mininet
 
 ~~~bash
-cd ~/cn-project-/cn-project-
+cd "$HOME/cn-project-qos"
 sudo mn -c
 sudo python3 src/mininet_topology.py
 ~~~
@@ -299,10 +312,10 @@ At the **mininet>** prompt, enter each line separately:
 
 ~~~text
 pingall
-py h3.cmd("python3 /home/link/cn-project-/cn-project-/src/traffic.py receive --seconds 90 --measure-seconds 30 --csv /home/link/cn-project-/cn-project-/results/demo-qos.csv > /home/link/cn-project-/cn-project-/results/demo-qos-receiver.log 2>&1 &")
+py h3.cmd("python3 src/traffic.py receive --seconds 90 --measure-seconds 30 --csv results/demo-qos.csv > results/demo-qos-receiver.log 2>&1 &")
 py __import__('time').sleep(2)
-py h1.cmd("python3 /home/link/cn-project-/cn-project-/src/traffic.py send --traffic-class high --seconds 30 --rate-mbps 1.5 > /home/link/cn-project-/cn-project-/results/demo-high.log 2>&1 &")
-py h2.cmd("python3 /home/link/cn-project-/cn-project-/src/traffic.py send --traffic-class bulk --seconds 30 --rate-mbps 8 > /home/link/cn-project-/cn-project-/results/demo-bulk.log 2>&1 &")
+py h1.cmd("python3 src/traffic.py send --traffic-class high --seconds 30 --rate-mbps 1.5 > results/demo-high.log 2>&1 &")
+py h2.cmd("python3 src/traffic.py send --traffic-class bulk --seconds 30 --rate-mbps 8 > results/demo-bulk.log 2>&1 &")
 py __import__('time').sleep(5)
 sh ovs-ofctl -O OpenFlow10 dump-flows s1
 ~~~
@@ -312,9 +325,9 @@ In the flow output, look for **tp_dst=5001** with **enqueue ... :1** and **tp_ds
 Let the receiver finish its 90-second window. Then, still at the Mininet prompt, read the run files:
 
 ~~~text
-py print(h3.cmd("cat /home/link/cn-project-/cn-project-/results/demo-qos-receiver.log; cat /home/link/cn-project-/cn-project-/results/demo-qos.csv"))
-py print(h1.cmd("cat /home/link/cn-project-/cn-project-/results/demo-high.log"))
-py print(h2.cmd("cat /home/link/cn-project-/cn-project-/results/demo-bulk.log"))
+py print(h3.cmd("cat results/demo-qos-receiver.log; cat results/demo-qos.csv"))
+py print(h1.cmd("cat results/demo-high.log"))
+py print(h2.cmd("cat results/demo-bulk.log"))
 ~~~
 
 Check that both CSV rows say **end_marker_received: true**. If not, packet loss is unknown for that stream. The sender summaries show how many packets were actually sent; use those values when discussing load. Stop Mininet with **exit**; stop POX with **Ctrl+C** in Terminal 1.
