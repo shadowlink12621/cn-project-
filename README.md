@@ -64,7 +64,7 @@ The gap between the 70% and 50% thresholds is hysteresis; it helps avoid rapid s
 flowchart LR
     H1["🟢 h1 · high UDP · port 5001"] -->|s1-eth1| S["Open vSwitch s1"]
     H2["🟠 h2 · bulk UDP · port 5002"] -->|s1-eth2| S
-    S -->|"s1-eth3 · 5 Mbps · queue 1 / 2"| H3["📥 h3 · receiver"]
+    S -->|"s1-eth3 · 2 Mbps · queue 1 / 2"| H3["📥 h3 · receiver"]
     P["POX controller"] <-->|"OpenFlow 1.0 · port 6633"| S
 ```
 
@@ -243,6 +243,125 @@ POX 0.7 may warn that Python 3.12 is outside its documented support range. The p
 - [x] Update the analysis with correctly labeled runs and measurement caveats
 - [ ] Present and demonstrate the final results
 
+
+## 🧭 Current 2 Mbps experiment: what the results say
+
+The checked-in topology and controller now use a **2 Mbps** receiver-facing link. The repository also contains older **5 Mbps** runs; don’t mix the two settings in one average. The three cap2 baseline CSVs and three cap2 QoS CSVs have valid receiver end markers. Across those three trials, the CSV averages are:
+
+| Setting | Class | Throughput | Mean delay | p95 delay | Packet loss |
+|---|---|---:|---:|---:|---:|
+| 2 Mbps, baseline | High | 0.810 Mbps | 530.9 ms | 660.4 ms | 0% |
+| 2 Mbps, baseline | Bulk | 1.062 Mbps | 551.0 ms | 693.9 ms | 0% |
+| 2 Mbps, QoS | High | 1.298 Mbps | 486.9 ms | 1.0%* | 0.28%* |
+| 2 Mbps, QoS | Bulk | 0.577 Mbps | 1,911.7 ms | 5,589.6 ms | 0% |
+
+*QoS high-flow loss occurred in one of three trials; the table averages the CSV percentages. These are descriptive averages, not a controlled proof of improvement: actual sent packet counts differ between baseline and QoS runs. The results suggest the high class received more throughput while bulk received less and experienced more delay. Don’t claim a guaranteed bandwidth or a consistent latency improvement from these trials. See **results/ANALYSIS.md** for per-run values and limitations.
+
+The separate overload check (**cap2-qos-check.csv**) recorded about 2.06 Mbps combined received throughput, high loss of 0%, and bulk loss of 71.56%. Its workload differs from the baseline check, so report it as a separate stress observation, not a matched comparison.
+
+## 🧠 Explain the system in plain language
+
+1. Three virtual computers are created by **Mininet**: h1 sends high-priority UDP, h2 sends bulk UDP, and h3 receives both.
+2. The two applications use different UDP destination ports: **5001** identifies high traffic and **5002** identifies bulk traffic. A port is like a labeled doorway on the receiving computer.
+3. **Open vSwitch (OVS)** is the virtual switch that forwards the packets. Its egress link to h3 is limited to 2 Mbps and has two Linux HTB queues: queue 1 has a configured 1.5 Mbps minimum; queue 2 has a configured 0.5 Mbps minimum. These are configuration values, not a measured guarantee.
+4. **POX** is the SDN controller framework. Our project uses a small custom POX application named **qos_controller**; it is not a separate commercial “QoS controller.” It reads switch port counters using OpenFlow 1.0.
+5. When measured use reaches at least 70%, the app installs rules that send UDP port 5001 to queue 1 and port 5002 to queue 2. It removes the policy below 50%. The gap helps prevent rapid on/off switching.
+6. The receiver records packet sequence numbers and timestamps. It reports throughput, delay, and loss; loss is valid only when the sender’s end marker arrives.
+
+**Packet path:** sender → Mininet link → OVS switch → shaped egress queue → receiver. POX watches and configures the switch over the separate OpenFlow control connection.
+
+### Important evidence note
+
+The saved 2 Mbps flow snapshots for cap2-qos2 and cap2-qos3 show normal output actions. They do **not** prove that the dynamic queues were active at the time those snapshots were taken. The earlier 5 Mbps adaptive6 run did capture both queue actions. For the 2 Mbps live demo, wait five seconds after starting the senders, check the controller for an ACTIVE message, and capture the flow table while the senders are still running. Only describe queue selection as verified for that run if you see UDP 5001 with enqueue queue 1 and UDP 5002 with enqueue queue 2.
+
+## 🖥️ Step-by-step live demo
+
+Use two Ubuntu VM terminal windows. The project path below matches the current VM account. If your VM username or folder differs, replace **/home/link/cn-project-/cn-project-** with your actual project path.
+
+### Terminal 1 — start the POX QoS controller
+
+~~~bash
+cd ~/cn-project-/cn-project-
+PYTHONPATH="$PWD/src" python3 ~/pox/pox.py qos_controller 2>&1 | tee results/demo-controller.log
+~~~
+
+Leave this running. Wait until you see **QoS controller ready**. When the switch connects, expect **Switch 1 connected**. During the traffic run, look for **Congestion policy ACTIVE**.
+
+### Terminal 2 — start Mininet
+
+~~~bash
+cd ~/cn-project-/cn-project-
+sudo mn -c
+sudo python3 src/mininet_topology.py
+~~~
+
+At the **mininet>** prompt, enter each line separately:
+
+~~~text
+pingall
+py h3.cmd("python3 /home/link/cn-project-/cn-project-/src/traffic.py receive --seconds 90 --measure-seconds 30 --csv /home/link/cn-project-/cn-project-/results/demo-qos.csv > /home/link/cn-project-/cn-project-/results/demo-qos-receiver.log 2>&1 &")
+py __import__('time').sleep(2)
+py h1.cmd("python3 /home/link/cn-project-/cn-project-/src/traffic.py send --traffic-class high --seconds 30 --rate-mbps 1.5 > /home/link/cn-project-/cn-project-/results/demo-high.log 2>&1 &")
+py h2.cmd("python3 /home/link/cn-project-/cn-project-/src/traffic.py send --traffic-class bulk --seconds 30 --rate-mbps 8 > /home/link/cn-project-/cn-project-/results/demo-bulk.log 2>&1 &")
+py __import__('time').sleep(5)
+sh ovs-ofctl -O OpenFlow10 dump-flows s1
+~~~
+
+In the flow output, look for **tp_dst=5001** with **enqueue ... :1** and **tp_dst=5002** with **enqueue ... :2**. The controller terminal should show **ACTIVE**. If the flow table still says **output:3**, or no ACTIVE line appears, queue selection was not verified in that run: save the output and say so honestly.
+
+Let the receiver finish its 90-second window. Then, still at the Mininet prompt, read the run files:
+
+~~~text
+py print(h3.cmd("cat /home/link/cn-project-/cn-project-/results/demo-qos-receiver.log; cat /home/link/cn-project-/cn-project-/results/demo-qos.csv"))
+py print(h1.cmd("cat /home/link/cn-project-/cn-project-/results/demo-high.log"))
+py print(h2.cmd("cat /home/link/cn-project-/cn-project-/results/demo-bulk.log"))
+~~~
+
+Check that both CSV rows say **end_marker_received: true**. If not, packet loss is unknown for that stream. The sender summaries show how many packets were actually sent; use those values when discussing load. Stop Mininet with **exit**; stop POX with **Ctrl+C** in Terminal 1.
+
+## 🎙️ Presentation plan for tomorrow
+
+Aim for a clear **6–8 minute** explanation plus the live demo and questions. Use this order:
+
+1. **Problem (Neha, about 1 minute):** why real-time traffic is harmed when bulk traffic fills a bottleneck; state the project goal.
+2. **Traffic and topology (Samarth, about 1–2 minutes):** explain the three Mininet hosts, UDP ports 5001/5002, the 2 Mbps bottleneck, and the two queues. Show the topology diagram.
+3. **Controller (Sridatta, about 1–2 minutes):** explain that the custom POX app polls OpenFlow port statistics, activates at 70%, directs traffic to queues 1/2, and clears below 50%.
+4. **Demo (Samarth operates, Neha narrates packet classes, Sridatta points out controller/flow evidence):** run pingall, start traffic, show ACTIVE and queue actions if present, then show the result CSV.
+5. **Results and limits (Sridatta, about 1 minute):** present the table above. Explain that the trials are not tightly matched by actual sent packet counts, so results are suggestive, not conclusive; queue minimums are configured but not a proven guarantee.
+6. **Close (all, 20 seconds):** summarize what works and one limitation honestly.
+
+These are **preparation and speaking roles**, not claims about who wrote past code. Each member should run through their assigned part and be ready to explain the whole packet path. Don’t read paragraphs from the screen; explain each step in your own words.
+
+## 📚 What each teammate should learn
+
+- **Neha — traffic and measurements:** what UDP does; what a destination port identifies; how sequence numbers and end markers let the receiver estimate loss; what throughput, mean delay, and p95 delay mean.
+- **Samarth — Mininet and OVS:** what a virtual host/link/switch is; why the receiver-facing link is the bottleneck; what an HTB queue is; how to read **output** versus **enqueue** in a flow dump.
+- **Sridatta — POX and results:** what SDN separates into control plane and data plane; what the custom POX app measures; the 70%/50% thresholds; how to report the trials without claiming more than they show.
+- **Everyone:** learn the packet path, how to start and stop the demo, and the limitations. Any examiner can ask any member.
+
+## ❓ Likely questions and short answers
+
+- **Which QoS controller did you use?** POX 0.7 with our own Python application, **qos_controller**. OVS is the switch and does the actual packet scheduling.
+- **How are flows classified?** By UDP destination port: 5001 is high priority; 5002 is bulk.
+- **How does the controller know the link is busy?** It polls OpenFlow port counters and estimates the rate over time, then compares utilization with 70% and 50% thresholds.
+- **What does the controller install?** OpenFlow rules using enqueue actions to select OVS queue 1 for port 5001 and queue 2 for port 5002.
+- **Is 1.5 Mbps guaranteed to the high class?** No guarantee is claimed. That is the configured minimum-rate value for queue 1; the VM measurements do not prove a hard guarantee.
+- **Why use two thresholds?** Hysteresis: turn on at 70%, turn off below 50%, avoiding rapid toggles near one threshold.
+- **How did you measure packet loss?** Sender sequence totals are compared with unique received sequence numbers. The receiver needs the end marker to know the sender’s final count.
+- **What does p95 delay mean?** 95% of the received packets had delay at or below that value; it reveals slow packets that the mean can hide.
+- **What did the experiments show?** The measured runs show different throughput and delay for high and bulk traffic, but actual loads differed. The result supports a demonstration of classification and policy behavior only when ACTIVE and queue actions are captured; it does not establish a consistent performance guarantee.
+- **Why not claim perfect fairness?** The actual offered packet counts varied and the comparison is not tightly load matched. We report the class tradeoff and avoid an unsupported fairness score.
+
+## ✅ Before presenting
+
+- [ ] Pull the latest repository on the VM and check the source has a 2,000,000 bit/s port cap and controller reference.
+- [ ] Start exactly one controller on port 6633; don’t run the learning switch and qos_controller together.
+- [ ] Check pingall, controller ACTIVE, both queue actions in one live capture, sender totals, and receiver end markers.
+- [ ] Make sure everyone can explain UDP, ports, SDN, OpenFlow, POX, OVS queues, throughput, delay, loss, and the result caveat.
+- [ ] Use the same setup/data labels throughout. Separate old 5 Mbps results from the current 2 Mbps trials.
+- [ ] Only claim evidence actually captured. If the 2 Mbps policy does not activate in the demo, explain that and use the earlier verified 5 Mbps adaptive6 run as the queue-action demonstration.
+- [ ] Rehearse once with a timer. Keep the explanation conversational and let each teammate answer a question.
+
 ---
 
 <div align="center">
@@ -250,6 +369,6 @@ POX 0.7 may warn that Python 3.12 is outside its documented support range. The p
 **Built by Team 14 · Section K · Computer Networks**
 
 > [!IMPORTANT]
-> **Current status (19 Oct 2026):** adaptive6 verified controller activation, both queue actions in the same live flow dump, and valid receiver end markers. The analysis and CSV are saved. Performance comparisons remain preliminary because baseline/adaptive sender counts differ. Review the results and rehearse the demo as a team; an additional baseline run is optional. PPT work is on hold pending Sridatta's confirmation.
+> **Current status (30 Oct 2026):** the repository contains the original 5 Mbps experiments and a newer 2 Mbps configuration with three baseline and three QoS CSV trials. The latest 2 Mbps flow snapshots do not show queue actions, so use the demo procedure below to capture an ACTIVE controller message and both queue actions during one live run. Results are preliminary because actual sender counts differ between conditions. The slide deck remains on hold until Sridatta confirms.
 
 </div>
