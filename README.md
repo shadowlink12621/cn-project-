@@ -252,7 +252,7 @@ The checked-in topology and controller now use a **2 Mbps** receiver-facing link
 |---|---|---:|---:|---:|---:|
 | 2 Mbps, baseline | High | 0.810 Mbps | 530.9 ms | 660.4 ms | 0% |
 | 2 Mbps, baseline | Bulk | 1.062 Mbps | 551.0 ms | 693.9 ms | 0% |
-| 2 Mbps, QoS | High | 1.298 Mbps | 486.9 ms | 1.0%* | 0.28%* |
+| 2 Mbps, QoS | High | 1.298 Mbps | 486.9 ms | 1,319.5 ms | 0.28%* |
 | 2 Mbps, QoS | Bulk | 0.577 Mbps | 1,911.7 ms | 5,589.6 ms | 0% |
 
 *QoS high-flow loss occurred in one of three trials; the table averages the CSV percentages. These are descriptive averages, not a controlled proof of improvement: actual sent packet counts differ between baseline and QoS runs. The results suggest the high class received more throughput while bulk received less and experienced more delay. Don’t claim a guaranteed bandwidth or a consistent latency improvement from these trials. See **results/ANALYSIS.md** for per-run values and limitations.
