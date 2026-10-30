@@ -1,169 +1,124 @@
 # VM setup and experiment runbook
 
-This guide assumes the team's Ubuntu VM has Mininet 2.3.0, Open vSwitch 3.3.9, and POX checked out at the home-directory path ~/pox. The current checked-in topology constrains the receiver-facing Open vSwitch port to 2 Mbps and creates two HTB queues. Older CSVs include 5 Mbps experiments; keep those results separate from the current 2 Mbps trials. The controller measures that port and selects queues for the two UDP destination ports after utilization crosses the configured threshold.
+This runbook uses relative project paths, so it does not depend on a Linux username or a nested checkout name. The current topology uses a 2 Mbps receiver-facing port, with queue 1 configured for UDP port 5001 and queue 2 for UDP port 5002. Queue minimums are settings, not proof of a guaranteed bandwidth.
 
-## 1. Pull the project files
+## 1. Install prerequisites on a fresh Ubuntu VM
 
-In the VM terminal:
+If Mininet, Open vSwitch, Python 3, or Git is missing:
 
-    cd ~/cn-project-/cn-project-
-    git pull origin main
+```bash
+sudo apt update
+sudo apt install -y git python3 mininet openvswitch-switch
+sudo systemctl enable --now openvswitch-switch
+```
 
-The current checkout is nested because the empty repository was cloned from inside a folder with the same name. Keep using this inner repository directory.
+If `apt` reports a 404, refresh package indexes with `sudo apt update` and retry the install.
 
-## 2. Start the controller
+Clone POX once if it is not already at `$HOME/pox`:
 
-Stop the earlier POX learning-switch process with Ctrl+C. In its terminal, start the project controller:
+```bash
+if [ ! -f "$HOME/pox/pox.py" ]; then
+  git clone https://github.com/noxrepo/pox.git "$HOME/pox"
+fi
+```
 
-    cd ~/cn-project-/cn-project-
-    PYTHONPATH="$PWD/src" python3 ~/pox/pox.py qos_controller
+The tested VM used Mininet 2.3.0, Open vSwitch 3.3.9, and POX 0.7.0. POX may warn that Python 3.12 is outside its documented range; do not change system Python just to hide the warning.
 
-Leave it running. The controller listens on port 6633 and reports switch connections, utilization, and policy state changes.
+## 2. Clone the project
 
-POX warned that Python 3.12 is newer than its documented Python range. The simple learning-switch smoke test worked in this VM. If the custom application fails to start, send the full traceback before changing Python packages.
+For a fresh clone, use this same folder on every VM:
 
-## 3. Start the topology
+```bash
+git clone https://github.com/shadowlink12621/cn-project-.git "$HOME/cn-project-qos"
+cd "$HOME/cn-project-qos"
+git pull --ff-only origin main
+```
 
-In a second VM terminal:
+For a repository already cloned to a different place, first change into that repository's top-level folder. Use that folder as the working directory in each terminal. All project and traffic script paths below are relative to it.
 
-    cd ~/cn-project-/cn-project-
-    sudo mn -c
-    sudo python3 src/mininet_topology.py
+## 3. Start the custom POX controller
 
-The command opens the Mininet CLI. It connects the switch to the controller and configures these queues on s1-eth3:
+Open terminal 1. Start from the project root:
 
-| Queue | UDP destination port | Meaning | Minimum rate | Maximum rate |
-|---|---:|---|---:|---:|
-| 1 | 5001 | High-priority real-time-like flow | 1.5 Mbps | 2 Mbps |
-| 2 | 5002 | Low-priority bulk flow | 0.5 Mbps | 2 Mbps |
+```bash
+cd "$HOME/cn-project-qos"
+PYTHONPATH="$PWD/src" python3 "$HOME/pox/pox.py" qos_controller
+```
 
-The current port capacity is 2 Mbps. Queue minimum rates are configuration values and have not been proven as hard guarantees by these measurements. Queue minimum rates are lower than the port capacity so both classes have room; these settings are experiment controls, not proof of a bandwidth guarantee.
+Keep the terminal open. Look for `QoS controller ready`, then `Switch 1 connected` after Mininet starts. During traffic, the controller may log `Congestion policy ACTIVE`.
 
-## 4. Run the baseline
+If port 6633 is already in use, check the listener with:
 
-For the baseline, the controller should be the standard POX learning switch rather than qos_controller. Stop the project controller with Ctrl+C, start the standard learning switch again, and restart the Mininet topology.
+```bash
+sudo ss -ltnp 'sport = :6633'
+```
 
-At the Mininet prompt, launch the receiver first, then both senders:
+Stop the correct old POX process with Ctrl+C in its terminal before starting another controller. Do not run two controllers on port 6633.
 
-    py h3.cmd("python3 /home/link/cn-project-/cn-project-/src/traffic.py receive --seconds 35 --measure-seconds 30 --csv /tmp/baseline.csv > /tmp/baseline-receiver.log 2>&1 &")
-    py __import__('time').sleep(2)
-    py h1.cmd("python3 /home/link/cn-project-/cn-project-/src/traffic.py send --traffic-class high --seconds 30 --rate-mbps 1.5 >/tmp/high-baseline.log 2>&1 &")
-    py h2.cmd("python3 /home/link/cn-project-/cn-project-/src/traffic.py send --traffic-class bulk --seconds 30 --rate-mbps 8 >/tmp/bulk-baseline.log 2>&1 &")
+## 4. Start Mininet
 
-Wait about 36 seconds, then inspect the measurements:
+Open terminal 2 in the same project root:
 
-    py print(h3.cmd('cat /tmp/baseline-receiver.log; cat /tmp/baseline.csv'))
-    py print(h1.cmd('cat /tmp/high-baseline.log'))
-    py print(h2.cmd('cat /tmp/bulk-baseline.log'))
+```bash
+cd "$HOME/cn-project-qos"
+sudo mn -c
+sudo python3 "$PWD/src/mininet_topology.py"
+```
 
-The first CSV row is the high-priority flow; the second is the bulk flow. Save the output before the next run. Also save both sender summaries. Check that the receiver reports `end_marker_received: true`; if it is false or the sender total exceeds receiver expected count, mark loss as unknown and do not quote the receiver's loss percentage.
+The topology script sets the working folder of h1, h2, and h3 to the project root it finds from its own file location. This makes commands such as `python3 src/traffic.py` work even if the clone is not under a particular username or folder name.
 
-## 5. Run with adaptive QoS
+At the `mininet>` prompt, check basic connectivity:
 
-Exit Mininet with exit. Stop the baseline controller with Ctrl+C, then start the project controller again:
+```text
+pingall
+```
 
-    cd ~/cn-project-/cn-project-
-    PYTHONPATH="$PWD/src" python3 ~/pox/pox.py qos_controller
+All six host-to-host pings should succeed.
 
-In another terminal, start the topology again:
+## 5. Run one traffic demonstration
 
-    cd ~/cn-project-/cn-project-
-    sudo mn -c
-    sudo python3 src/mininet_topology.py
+Enter each line separately at `mininet>`. Start the receiver before the senders. The receiver runs for 90 seconds so it can collect the sender end markers after the 30-second senders finish.
 
-At the Mininet prompt, repeat the same receiver and sender commands, changing the result paths from baseline to adaptive:
+```text
+py h3.cmd("python3 src/traffic.py receive --seconds 90 --measure-seconds 30 --csv results/demo.csv > results/demo-receiver.log 2>&1 &")
+py __import__('time').sleep(2)
+py h1.cmd("python3 src/traffic.py send --traffic-class high --seconds 30 --rate-mbps 1.5 > results/demo-high.log 2>&1 &")
+py h2.cmd("python3 src/traffic.py send --traffic-class bulk --seconds 30 --rate-mbps 8 > results/demo-bulk.log 2>&1 &")
+py __import__('time').sleep(5)
+sh ovs-ofctl -O OpenFlow10 dump-flows s1
+```
 
-    py h3.cmd("python3 /home/link/cn-project-/cn-project-/src/traffic.py receive --seconds 35 --measure-seconds 30 --csv /tmp/adaptive.csv > /tmp/adaptive-receiver.log 2>&1 &")
-    py __import__('time').sleep(2)
-    py h1.cmd("python3 /home/link/cn-project-/cn-project-/src/traffic.py send --traffic-class high --seconds 30 --rate-mbps 1.5 >/tmp/high-adaptive.log 2>&1 &")
-    py h2.cmd("python3 /home/link/cn-project-/cn-project-/src/traffic.py send --traffic-class bulk --seconds 30 --rate-mbps 8 >/tmp/bulk-adaptive.log 2>&1 &")
+While traffic is flowing, look for UDP `tp_dst=5001` with `enqueue` queue 1 and UDP `tp_dst=5002` with `enqueue` queue 2. The controller should also log `ACTIVE`. If the flow output remains `output:3`, queue selection was not verified in that run; report that accurately.
 
-Check that the controller reports congestion and the policy changing to ACTIVE:
+After the receiver's 90-second window has elapsed, read the results from the same Mininet prompt:
 
-    py print(h3.cmd('cat /tmp/adaptive-receiver.log; cat /tmp/adaptive.csv'))
-    py print(h1.cmd('cat /tmp/high-adaptive.log'))
-    py print(h2.cmd('cat /tmp/bulk-adaptive.log'))
+```text
+py print(h3.cmd("cat results/demo-receiver.log; cat results/demo.csv"))
+py print(h1.cmd("cat results/demo-high.log"))
+py print(h2.cmd("cat results/demo-bulk.log"))
+```
 
-After the run, exit Mininet. Copy the CSV files into the repository's results directory only after confirming the rows contain real output. Record the controller log and experiment settings alongside them.
+Only report receiver loss if that class has `end_marker_received: true`. The sender logs show the actual packet totals; an offered rate is only a request.
 
-## 6. Metrics and interpretation
+Exit Mininet with `exit`. Stop POX with Ctrl+C in terminal 1.
 
-The receiver reports:
-- **Throughput:** unique UDP traffic bytes received, divided by the configured 30-second send window.
-- **Packet loss:** sent sequence count from the sender's end marker minus unique sequence numbers received.
-- **End-marker status:** `end_marker_received` must be `true` for receiver-computed loss to be valid. If false, expected/lost/loss percentage are blank/null because the receiver cannot infer packets that may have been lost at the end of the stream. Compare sender totals with unique received counts or repeat the run.
-- **Delay:** average and 95th-percentile one-way time difference between the sender and receiver clocks. Both processes run inside the same VM, so they share the system clock.
+## 6. Baseline run
 
-Use the same offered rates, packet sizes, link capacity, and run duration for both runs. Do not claim an improvement until the actual CSV results support it. The adaptive policy should direct UDP port 5001 to queue 1 and port 5002 to queue 2 only while the measured egress utilization is at least 70%; it returns to baseline below 50%.
+For a baseline, stop `qos_controller` with Ctrl+C and start POX's standard learning switch in terminal 1:
 
-## Troubleshooting
+```bash
+cd "$HOME/pox"
+./pox.py forwarding.l2_learning
+```
 
-- **Controller does not start:** keep the complete POX traceback. Python 3.12 produced a compatibility warning during the smoke test.
-- **Switch does not connect:** confirm the controller is still running on port 6633 and that Mininet uses OpenFlow 1.0.
-- **Queue setup fails:** capture the complete error from the topology terminal and run sudo ovs-vsctl show after exiting Mininet.
-- **A port is already in use:** exit Mininet, stop the controller with Ctrl+C, then run sudo mn -c before starting again.
+In terminal 2, restart Mininet using the steps above and run the same traffic commands with new result names such as `results/demo-baseline.csv`. During the baseline, the two UDP flows should use ordinary output actions rather than the queue 1/2 actions. Stop the learning switch before restarting `qos_controller`.
 
+## 7. Troubleshooting
 
-## 7. Team handoff for the next run
+- **`mininet: command not found`:** install Mininet and Open vSwitch using section 1, then reopen the terminal.
+- **Switch cannot connect:** confirm the controller is running first on port 6633, and that the topology uses OpenFlow 1.0.
+- **File not found for `src/traffic.py`:** start the topology from the repository root and pull the latest `main`; the current topology sets Mininet hosts' working folders automatically.
+- **A prompt says `Unknown command`:** enter one line at a time after `mininet>`; do not paste the prompt itself.
+- **A CSV reports `end_marker_received: false`:** loss for that stream is unknown. Do not quote the receiver's loss percentage; repeat with a longer receiver window.
 
-Suggested task split for Team 14:
-
-- **Sridatta:** coordinate the integration, keep track of valid baseline/QoS evidence, and update the results analysis after the next run.
-- **Samarth:** operate the VM for the next adaptive QoS trial; capture sender counts, receiver CSV, controller ACTIVE messages, and the OpenFlow flow dump.
-- **Neha:** review the project explanation and docs against the submitted proposal, add the final demo checklist/limitations, and help each teammate rehearse the packet path and results.
-- **All three:** review actual numbers together and agree who runs the live demo. These are proposed roles; coordinate with each other before the review.
-
-Do not create or revise the slide deck until the project is complete and Sridatta confirms.
-
-For the next adaptive trial, use unique `adaptive4` paths and keep the same traffic parameters as the latest baseline. Start the QoS controller in one VM terminal, start a fresh topology in a second terminal, and run the commands in Section 5 after substituting `adaptive4` for `adaptive`. While packets are flowing, run this at the Mininet prompt:
-
-    sh ovs-ofctl -O OpenFlow10 dump-flows s1
-
-Retain evidence that the policy became ACTIVE, port 5001 used enqueue queue 1, and port 5002 used enqueue queue 2. Retrieve receiver and sender logs with the `py print(hN.cmd(...))` pattern. A usable result requires both receiver end markers to be true and the sender totals to be saved.
-
-
-## 8. Retest after adaptive4 missed both end markers
-
-The previous adaptive4 trial verified the controller and queue mapping, but the receiver stopped before it got either sender's QEND marker. Its loss is unknown. The bulk sender produced 23,737 packets, far more than baseline5's 8,767, so do not compare adaptive4 directly with baseline5.
-
-For a load-matched pair, repeat **both baseline and adaptive** with identical rates: high 1.5 Mbps and bulk 3.0 Mbps. Set receiver `--seconds 90 --measure-seconds 30`; keep senders at 30 seconds. The extra receiver time allows queued packets and repeated end markers to drain. Use unique files such as `baseline6.csv`, `high-baseline6.log`, `bulk-baseline6.log`, then `adaptive5.csv`, `high-adaptive5.log`, and `bulk-adaptive5.log`.
-
-For the baseline, run only `forwarding.l2_learning`; verify the active UDP flows have normal `output:"s1-eth3"` actions. For the adaptive condition, run `qos_controller`; save its ACTIVE line and verify UDP 5001 uses queue 1 and UDP 5002 uses queue 2 while senders are active. In each condition, record sender totals and require both receiver rows to show `end_marker_received: true`. Compare actual packet counts before describing the pair as load matched. If a QEND marker is still missing, keep loss unknown and extend receiver time or repeat; do not infer loss from receiver counts alone.
-
-
-## 9. Final 2 Mbps demo and what to say
-
-The commands below match the current project version and the VM path used by this team. If your Linux username or checkout path differs, replace **/home/link/cn-project-/cn-project-** with the correct path.
-
-**Terminal 1 — custom POX controller:**
-
-    cd ~/cn-project-/cn-project-
-    PYTHONPATH="$PWD/src" python3 ~/pox/pox.py qos_controller 2>&1 | tee results/demo-controller.log
-
-Wait for **QoS controller ready** and then **Switch 1 connected**.
-
-**Terminal 2 — Mininet:**
-
-    cd ~/cn-project-/cn-project-
-    sudo mn -c
-    sudo python3 src/mininet_topology.py
-
-At the **mininet>** prompt, enter one line at a time:
-
-    pingall
-    py h3.cmd("python3 /home/link/cn-project-/cn-project-/src/traffic.py receive --seconds 90 --measure-seconds 30 --csv /home/link/cn-project-/cn-project-/results/demo-qos.csv > /home/link/cn-project-/cn-project-/results/demo-qos-receiver.log 2>&1 &")
-    py __import__('time').sleep(2)
-    py h1.cmd("python3 /home/link/cn-project-/cn-project-/src/traffic.py send --traffic-class high --seconds 30 --rate-mbps 1.5 > /home/link/cn-project-/cn-project-/results/demo-high.log 2>&1 &")
-    py h2.cmd("python3 /home/link/cn-project-/cn-project-/src/traffic.py send --traffic-class bulk --seconds 30 --rate-mbps 8 > /home/link/cn-project-/cn-project-/results/demo-bulk.log 2>&1 &")
-    py __import__('time').sleep(5)
-    sh ovs-ofctl -O OpenFlow10 dump-flows s1
-
-Look for **Congestion policy ACTIVE** in Terminal 1 and these actions in the flow dump: UDP destination 5001 uses **enqueue queue 1**; UDP destination 5002 uses **enqueue queue 2**. If the dump says **output:3**, or ACTIVE never appears, that run did not verify adaptive queue selection. Save the output and explain the limitation honestly.
-
-Wait for the receiver's 90-second window, then at **mininet>** inspect:
-
-    py print(h3.cmd("cat /home/link/cn-project-/cn-project-/results/demo-qos-receiver.log; cat /home/link/cn-project-/cn-project-/results/demo-qos.csv"))
-    py print(h1.cmd("cat /home/link/cn-project-/cn-project-/results/demo-high.log"))
-    py print(h2.cmd("cat /home/link/cn-project-/cn-project-/results/demo-bulk.log"))
-
-Only use receiver loss values when **end_marker_received** is **true** for that class. The sender logs show actual packet totals; the configured request rate is not the same as the rate the VM successfully sent. Exit Mininet with **exit** and stop POX with **Ctrl+C**.
+Older experiments in `results/` used a 5 Mbps cap. Keep them separate from the current 2 Mbps measurements.
