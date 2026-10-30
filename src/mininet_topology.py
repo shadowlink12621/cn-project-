@@ -46,7 +46,7 @@ def configure_receiver_queues():
             "create",
             "QoS",
             "type=linux-htb",
-            "other-config:max-rate=5000000",
+            "other-config:max-rate=2000000",
             "queues:1=@high",
             "queues:2=@bulk",
             "--",
@@ -54,17 +54,17 @@ def configure_receiver_queues():
             "create",
             "Queue",
             "other-config:min-rate=1500000",
-            "other-config:max-rate=5000000",
+            "other-config:max-rate=2000000",
             "--",
             "--id=@bulk",
             "create",
             "Queue",
             "other-config:min-rate=500000",
-            "other-config:max-rate=5000000",
+            "other-config:max-rate=2000000",
         ],
         check=True,
     )
-    print("Configured s1-eth3 at 5 Mbps: queue 1 = high, queue 2 = bulk.")
+    print("Configured s1-eth3 at 2 Mbps: queue 1 = high, queue 2 = bulk.")
 
 
 def main():

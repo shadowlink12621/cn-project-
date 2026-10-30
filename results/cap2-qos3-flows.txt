@@ -1,0 +1,2 @@
+NXST_FLOW reply (xid=0x4):
+ cookie=0x0, duration=0.003s, table=0, n_packets=2, n_bytes=2484, idle_timeout=10, hard_timeout=30, idle_age=0, priority=65535,udp,in_port=2,vlan_tci=0x0000,dl_src=00:00:00:00:00:02,dl_dst=00:00:00:00:00:03,nw_src=10.0.0.2,nw_dst=10.0.0.3,nw_tos=0,tp_src=35537,tp_dst=5002 actions=output:3
