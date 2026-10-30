@@ -441,3 +441,16 @@ Only count this as a complete adaptive measurement if the receiver output has `e
 - **Files:** `results/adaptive6.csv` saved; `results/ANALYSIS.md` updated.
 - **Interpretation:** functional demonstration is complete: controller activation, both per-class queue actions in one run, and valid receiver measurements are verified. Compared with baseline6, sender counts differ by 16.8% high and 13.4% bulk, so performance conclusions remain preliminary. Another baseline at the same rates is optional strengthening, not a blocker for the demo. Team review/rehearsal remains.
 - **PPT:** remains on hold until Sridatta explicitly confirms to create/update it.
+
+
+### 2026-10-30 — 2 Mbps evidence and presentation preparation
+
+- GitHub now has the 2 Mbps topology/controller configuration, cap2 CSVs, and saved flow dumps. The topology startup label was corrected to 2 Mbps.
+- The cap2 QoS flow snapshots currently checked into the repository show **output:3**, not queue enqueue actions. Do not use those snapshots as proof that adaptive queue selection occurred in those particular captures. The README and experiment guide now include a live recapture procedure.
+- **Neha — preparation task:** own the plain-language explanation of UDP, destination-port classification (5001/5002), sender/receiver measurement, and end-marker requirement. Read the traffic-generation section and explain it back to the team.
+- **Samarth — preparation task:** own the Mininet/OVS setup and live demo operation. Confirm pingall, the 2 Mbps link cap, queue IDs/min-rate values, and how to distinguish output from enqueue in a flow dump.
+- **Sridatta — preparation task:** own the custom POX controller explanation, 70% activation / 50% deactivation thresholds, experiment labels, and cautious interpretation of the CSVs.
+- **Everyone:** rehearse the complete packet path and swap questions so each member can answer basics. These are preparation roles; do not claim a teammate completed work they did not do.
+- **Results interpretation:** the three baseline and three QoS cap2 CSVs have valid end markers but actual sender counts differ. The averages are descriptive, not a controlled performance comparison. Queue minimum-rate settings are not proof of guaranteed delivered bandwidth.
+- **Presentation outline:** problem and goal; topology and two UDP classes; POX/OpenFlow control; live traffic and flow evidence; measured results with caveats; limitations and conclusion. Keep the talk conversational and show only evidence that is actually captured.
+- **PPT:** still not to be generated or revised until Sridatta explicitly confirms.
