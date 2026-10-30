@@ -4,9 +4,11 @@
 **Course / section:** Computer Networks, Section K  
 **Repository:** https://github.com/shadowlink12621/cn-project-  
 **Working branch:** main  
-**Last updated:** 2026-10-16
+**Last updated:** 2026-10-30
 
 This is the team's shared reference for the project goal, what each person needs to do, how to work in GitHub, what has been tried, and the next action. Add a dated note here after each meaningful setup, implementation, experiment, or presentation milestone. Keep errors and the fix that worked so the next teammate does not repeat the same debugging.
+
+> **Current command reference:** Use the Quick start in `README.md` and `docs/SETUP_AND_EXPERIMENT.md` for commands to run now. Older terminal transcripts in this work log are historical and may contain the original username-specific checkout path or 5 Mbps settings. The current topology uses 2 Mbps and sets Mininet hosts' working folder from the cloned project location, so use relative paths such as `src/traffic.py`. A fresh clone can use `$HOME/cn-project-qos`; for an existing clone, start each terminal in that repository's root.
 
 ## 1. What we are building
 
@@ -17,7 +19,7 @@ The project follows the understanding-and-approach email sent to the professor:
    - High-priority, real-time-like packets: destination port 5001.
    - Low-priority bulk packets: destination port 5002.
 3. Send both flows through one OpenFlow switch to a receiver host.
-4. Limit the receiver-facing switch port to 5 Mbps to create repeatable congestion.
+4. Limit the receiver-facing switch port to 2 Mbps to create repeatable congestion.
 5. Have an SDN controller poll switch port statistics. When utilization reaches 70%, it directs the two UDP classes to separate Open vSwitch queues. When utilization falls below 50%, it returns to normal forwarding.
 6. Compare baseline and adaptive runs using received throughput, sequence-based packet loss, average delay, and 95th-percentile delay.
 
